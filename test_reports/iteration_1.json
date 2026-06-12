@@ -1,0 +1,40 @@
+{
+  "summary": "Comprehensive Playwright testing of HackerWare static frontend game. 4/5 mini-games work, 2 are broken due to a shared root cause (area id rename breaks localRect/spawnBurst helpers). Start/intro/HUD/timer/round/feedback/game-over/restart/randomization/sounds all work. NO BACKEND TESTING (static app).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Phishing Hook Cut mini-game", "issue": "CRITICAL: Clicking the cyan phish-line throws 'Cannot read properties of null (reading getBoundingClientRect)' so onWin is never scheduled and the player can NEVER win this mini-game. Root cause: mount() does `area.id = 'phish-area'`, but the helper `localRect(el)` (called immediately on click via `const r = localRect(line)`) does `document.getElementById('game-area').getBoundingClientRect()` which is null. The exception aborts the handler before `setTimeout(onWin, 600)` is reached. Verified by clicking line in fresh page state - line and bait animate (cut/dropped) but feedback screen never appears.", "selector": "[data-testid='phish-line']", "priority": "CRITICAL"},
+      {"component": "Meme Shield mini-game", "issue": "CRITICAL: Same root cause as Phishing. mount() does `area.id = 'meme-area'`, so when a bad bubble is clicked, `spawnBurst(...)` calls `document.getElementById('game-area')` which is null, then `ga.appendChild(p)` throws. The win logic (`badRemaining--; if (badRemaining<=0) onWin`) sits AFTER spawnBurst inside the same handler, so it never runs. Effectively impossible to win Meme Shield.", "selector": "[data-testid='bad-meme']", "priority": "CRITICAL"},
+      {"component": "Dev hooks on window", "issue": "Spec says `window.SoundSynth`, `window.Game`, `window.MiniGames` must be 'callable and existing'. They are declared with `const` so they are NOT properties of window (window.SoundSynth === undefined). They are accessible lexically inside page-context expressions, but not via window.* — fails the literal acceptance criterion. `window.nextRound` and `window.startNewGame` ARE on window because they are function declarations.", "selector": "window.SoundSynth", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Phishing win flow", "issue": "Click on line cuts visually but never advances to feedback screen", "affected_selectors": ["[data-testid='phish-line']", "[data-testid='screen-feedback']"]},
+      {"flow": "Meme Shield win flow", "issue": "Clicking bad bubble never reduces badRemaining counter or triggers onWin", "affected_selectors": ["[data-testid='bad-meme']", "[data-testid='screen-feedback']"]}
+    ],
+    "design_issues": [
+      {"screen": "Phishing & Meme Shield HUD overlap", "issues": ["Instruction text near top (CLICK THE GLOWING CYAN LINE TO SNIP IT!) visually overlaps the TIME label/bar in the HUD at 1920x800 viewport. Hard to read both."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "FIX (CRITICAL): In Phishing mini-game mount, do NOT rename `area.id = 'phish-area'`. Instead toggle a CSS class on #game-area (e.g. `area.classList.add('phish-mode')`) and add CSS `#game-area.phish-mode { cursor: none; }`. Update cleanup to remove the class. Same fix for Meme Shield ('meme-area'). Alternative: change `localRect` and `spawnBurst` to accept an area element or look it up by querying the active screen rather than hard-coded id.",
+    "FIX (CRITICAL): Verify all mini-games can be WON end-to-end after the area-id fix.",
+    "FIX (MEDIUM): Explicitly expose dev hooks on window: `window.SoundSynth = SoundSynth; window.Game = Game; window.MiniGames = MiniGames; window.Screens = Screens; window.Timer = Timer; window.renderLives = renderLives;` so the acceptance criterion 'window.SoundSynth callable' is satisfied, and the agent-to-agent forced-mini-game console snippet (Game.lives=3; Game.miniGameQueue=[MiniGames[N]]; nextRound();) works from external contexts.",
+    "FIX (MINOR): Move the per-mini-game instruction text below the HUD (currently ~y=10px which sits behind the TIME label/bar)."
+  ],
+  "critical_code_review_comments": [
+    "Single 1600+ line HTML file is hard to maintain. Consider extracting JS modules.",
+    "`localRect()` and `spawnBurst()` hard-code `document.getElementById('game-area')` but Phishing/Meme renaming the area id silently breaks them — fragile coupling. Pass the area element explicitly.",
+    "`startMiniGame` never cleans up the PREVIOUSLY active mini-game's cleanup() — only finish() does. If `nextRound()` is called externally before the previous round naturally ended, the prior mini-game's setIntervals/event listeners may leak. The auto-advance setTimeout(3200) in showFeedback also races with click-to-continue (the `advanced` flag mitigates this, but the setTimeout is never cleared even after advance ran).",
+    "Game.miniGameQueue defaults to all 5 then reshuffles — fine. But round counter formula `Game.roundsWon + (3 - Game.lives) + 1` will compute incorrectly if both lives lost and rounds won don't sum cleanly (it does in normal play but it's fragile).",
+    "Top-level `const` declarations are not attached to window — breaks documented dev hook API.",
+    "Tip text is identical for win and lose for every mini-game — consider differentiating to reinforce learning on losses."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "60% (3/5 mini-games work end-to-end: Password Puzzle, Fake News Detective, Inbox Cleaner; Phishing & Meme Shield broken)"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 5 mini-games have data-testid hooks. To force-test a mini-game: `Game.lives=3; Game.miniGameQueue=[MiniGames[N]]; renderLives(); Screens.hud(true); nextRound();` then wait for screen-game.active (handles the 2s intro). For drag tests use mouse.down/move/up at piece center → slot center (snap threshold 70px in local 960-wide coords; bounding_box gives real screen coords which scale automatically). After main agent fixes the area-id bug, retest Phishing (click cyan line, click bait separately) and Meme Shield (click each bad red bubble). Inbox Cleaner test was not exercised end-to-end here — also verify drag-virus-to-INBOX triggers instant lose. Console error 'Cannot read properties of null (reading getBoundingClientRect)' is the smoking gun for the area-id bug.",
+  "rca_of_the_issue": "Phishing and Meme Shield mini-games set `area.id = 'phish-area'` / `'meme-area'` to apply custom cursor CSS (rules `#phish-area { cursor: none; }` and `#meme-area { cursor: none; }`). The helper functions `localRect()` (line 920) and `spawnBurst()` (line 943) hard-code `document.getElementById('game-area')`. After the rename, getElementById returns null. localRect immediately calls `.getBoundingClientRect()` on null → TypeError. In Phishing's cutHandler this exception fires before `setTimeout(onWin, 600)` is reached, so the round never resolves. In Meme Shield, spawnBurst's `ga.appendChild(p)` throws, and the badRemaining decrement / onWin check that come after never execute. Reproduction: open /hackerware.html, click PLAY, force Game.miniGameQueue=[MiniGames[4]]; nextRound(); after intro, click the cyan line — feedback screen never appears, pageerror logged. Mitigation options: (1) don't rename the area id; apply cursor styling via classList instead, with CSS like `#game-area.phish-mode { cursor: none; }`; (2) refactor `localRect` and `spawnBurst` to take the area element as a parameter or to look it up via `.screen.active .game-area` selector."
+}

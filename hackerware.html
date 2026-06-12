@@ -1,0 +1,4945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HackerWare - Cyber Safety Micro Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   HACKERWARE - PIXEL ART CYBERSECURITY MICRO-GAMES
+   Color Palette (Vibrant Neon Arcade):
+     --bg-deep:    #0d0221   deep purple-black
+     --bg-mid:     #241734   purple shadow
+     --neon-pink:  #ff2975   hot pink
+     --neon-cyan:  #00f0ff   cyan
+     --neon-yellow:#f7ff00   electric yellow
+     --neon-green: #39ff14   lime green
+     --neon-orange:#ff9f1c   orange
+     --neon-red:   #ff124f   red
+     --text-light: #ffffff   white
+   ========================================================= */
+:root {
+  --bg-deep:     #0d0221;
+  --bg-mid:      #241734;
+  --neon-pink:   #ff2975;
+  --neon-cyan:   #00f0ff;
+  --neon-yellow: #f7ff00;
+  --neon-green:  #39ff14;
+  --neon-orange: #ff9f1c;
+  --neon-red:    #ff124f;
+  --text-light:  #ffffff;
+  --text-dark:   #0d0221;
+  /* White-theme additions: page background + readable ink */
+  --page-bg:     #ffffff;
+  --surface:     #ffffff;
+  --surface-alt: #f4f6fa;
+  --ink:         #1a1a2e;
+  --ink-soft:    #4b5067;
+  /* Title palette (white-theme) */
+  --title-1:     #0066ff; /* electric blue primary */
+  --title-2:     #ff6b00; /* vivid orange shadow */
+  --title-3:     #0d0221; /* dark depth */
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--page-bg);
+  font-family: 'Press Start 2P', monospace;
+  color: var(--ink);
+  overflow: hidden;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  user-select: none;
+  cursor: default;
+}
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Scrolling pixel grid background on white */
+  background-color: var(--page-bg);
+  background-image:
+    linear-gradient(rgba(255,41,117,0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,102,255,0.10) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: 0 0;
+  animation: gridScroll 6s linear infinite;
+}
+@keyframes gridScroll {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 32px 32px, 32px 32px; }
+}
+
+/* ===== Stage (virtual 1100x750 scales to fit) ===== */
+#stage {
+  position: relative;
+  width: 1000px;
+  height: 660px;
+  max-width: 100vw;
+  max-height: 100vh;
+  background: var(--surface);
+  border: 6px solid var(--neon-cyan);
+  box-shadow:
+    0 0 0 6px var(--surface),
+    0 0 0 10px var(--neon-pink),
+    0 0 40px rgba(255,41,117,0.4),
+    inset 0 0 60px rgba(0,240,255,0.08);
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+/* ===== HUD ===== */
+#hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-alt));
+  border-bottom: 4px solid var(--neon-pink);
+  z-index: 50;
+  font-size: 12px;
+  pointer-events: none;
+  color: var(--ink);
+}
+#hud.hidden { display: none; }
+#lives { display: flex; gap: 18px; align-items: center; padding-left: 8px; }
+.heart {
+  width: 22px; height: 22px;
+  background: var(--neon-red);
+  position: relative;
+  display: inline-block;
+  transform: rotate(-45deg);
+  margin: 11px 11px 0 11px;
+  box-shadow: 0 0 6px var(--neon-red);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.heart::before, .heart::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  background: var(--neon-red);
+  border-radius: 50%;
+}
+.heart::before { top: -11px; left: 0; }
+.heart::after  { left: 11px; top: 0; }
+.heart.lost { opacity: 0.15; background: #444; box-shadow: none; }
+.heart.lost::before, .heart.lost::after { background: #444; }
+#timer-wrap { flex: 1; margin: 0 24px; }
+#timer-label { font-size: 9px; color: var(--ink); margin-bottom: 4px; text-align: center; }
+#timer-bar-bg {
+  width: 100%; height: 14px;
+  background: var(--surface-alt);
+  border: 2px solid var(--neon-cyan);
+  position: relative;
+  overflow: hidden;
+}
+#timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow), var(--neon-orange), var(--neon-red));
+  width: 100%;
+  transition: width 0.2s linear;
+}
+#round-label { font-size: 10px; color: #0066b8; min-width: 90px; text-align: right; }
+
+/* ===== Screens ===== */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+.screen.active { display: flex; }
+
+/* ===== Start Screen ===== */
+#screen-start h1 {
+  font-size: 56px;
+  color: var(--title-1);
+  text-shadow:
+    4px 4px 0 var(--title-2),
+    8px 8px 0 var(--title-3),
+    0 0 30px rgba(0,102,255,0.35);
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+  animation: titleBounce 1.6s ease-in-out infinite;
+}
+@keyframes titleBounce {
+  0%,100% { transform: translateY(0) rotate(-1deg); }
+  50%     { transform: translateY(-10px) rotate(1deg); }
+}
+#screen-start .subtitle {
+  font-size: 14px;
+  color: var(--neon-pink);
+  margin-bottom: 36px;
+  letter-spacing: 2px;
+}
+#screen-start .lives-preview {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+#screen-start .lives-preview .heart { width: 30px; height: 30px; }
+#screen-start .lives-preview .heart::before,
+#screen-start .lives-preview .heart::after { width: 30px; height: 30px; }
+#screen-start .lives-preview .heart::before { top: -15px; left: 0; }
+#screen-start .lives-preview .heart::after  { left: 15px; top: 0; }
+#screen-start .hint {
+  margin-top: 30px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--ink);
+  max-width: 640px;
+  line-height: 1.4;
+}
+/* Language selector */
+#lang-wrapper {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+#lang-selector {
+  display: flex;
+  gap: 16px;
+}
+.lang-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 3px solid var(--neon-cyan);
+  padding: 10px 18px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.12s;
+}
+.lang-btn:hover { background: rgba(0,240,255,0.15); }
+.lang-btn.active {
+  background: var(--neon-cyan);
+  color: var(--text-dark);
+  box-shadow: 0 0 16px rgba(0,240,255,0.6);
+}
+
+
+/* ===== Pixel Button ===== */
+.pixel-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: var(--text-dark);
+  background: var(--neon-yellow);
+  border: none;
+  padding: 18px 36px;
+  cursor: pointer;
+  position: relative;
+  box-shadow:
+    6px 6px 0 var(--bg-deep),
+    6px 6px 0 6px var(--neon-pink);
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+  letter-spacing: 2px;
+}
+.pixel-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow:
+    8px 8px 0 var(--bg-deep),
+    8px 8px 0 6px var(--neon-pink);
+}
+.pixel-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow:
+    2px 2px 0 var(--bg-deep),
+    2px 2px 0 6px var(--neon-pink);
+}
+.pixel-btn.cyan { background: var(--neon-cyan); }
+.pixel-btn.green { background: var(--neon-green); }
+
+/* ===== Intro Screen (mini-game prompt) ===== */
+#screen-intro {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 80px 40px 30px;
+  background: var(--surface);
+}
+.intro-top {
+  text-align: center;
+  padding-bottom: 22px;
+  border-bottom: 4px solid var(--neon-cyan);
+}
+.intro-bottom {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 26px;
+}
+#screen-intro .prompt {
+  font-size: 36px;
+  color: var(--neon-pink);
+  text-shadow: 3px 3px 0 var(--neon-yellow), 6px 6px 0 var(--title-3);
+  letter-spacing: 3px;
+  animation: promptPulse 0.5s ease-in-out infinite alternate;
+  padding: 0 20px;
+}
+@keyframes promptPulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.04); }
+}
+#screen-intro .topic {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--title-1);
+  letter-spacing: 2px;
+}
+#screen-intro .description {
+  margin-top: 16px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.3;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ===== Tutorial micro-demos (looping pixel-art) ===== */
+.demo {
+  position: relative;
+  width: 380px;
+  height: 170px;
+  background: var(--surface-alt);
+  border: 3px solid var(--title-1);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 5px 5px 0 var(--neon-pink);
+}
+.demo-cursor {
+  position: absolute;
+  width: 28px; height: 28px;
+  z-index: 10;
+  pointer-events: none;
+}
+.demo-scissors-cursor { width: 32px; height: 32px; }
+
+/* SVG mouse-cursor pixel art (used as ::before bg) */
+.demo-cursor svg, .demo-scissors-cursor svg { width: 100%; height: 100%; display: block; }
+
+/* ---- Demo 1: Password Puzzle: hand drags a piece into a slot ---- */
+.demo-password .d-slot {
+  position: absolute; top: 60px; left: 250px;
+  width: 56px; height: 56px;
+  border: 3px dashed var(--neon-cyan);
+  background: rgba(0,240,255,0.08);
+  border-radius: 4px;
+}
+.demo-password .d-piece {
+  position: absolute; top: 60px; left: 60px;
+  width: 56px; height: 56px;
+  background: var(--neon-green);
+  color: var(--text-dark);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid var(--title-3);
+  box-shadow: 3px 3px 0 var(--title-3);
+  animation: dPiece 2.4s ease-in-out infinite;
+}
+.demo-password .demo-cursor {
+  top: 80px; left: 88px;
+  animation: dCursorPw 2.4s ease-in-out infinite;
+}
+@keyframes dPiece {
+  0%       { transform: translate(0,0); }
+  20%      { transform: translate(0,0); }
+  60%      { transform: translate(190px,0); }
+  80%      { transform: translate(190px,0); }
+  100%     { transform: translate(0,0); }
+}
+@keyframes dCursorPw {
+  0%       { transform: translate(0,0) scale(1); }
+  15%      { transform: translate(0,0) scale(1); }
+  20%      { transform: translate(0,0) scale(0.85); } /* "grab" */
+  60%      { transform: translate(190px,0) scale(0.85); }
+  70%      { transform: translate(190px,0) scale(1); } /* "release" */
+  100%     { transform: translate(0,0) scale(1); }
+}
+
+/* ---- Demo 2: Meme Shield: bubble falls, hand clicks it ---- */
+.demo-meme .d-bubble {
+  position: absolute;
+  left: 150px; top: -40px;
+  min-width: 80px;
+  padding: 6px 10px;
+  background: var(--neon-red);
+  color: var(--text-light);
+  border: 3px solid var(--title-3);
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  text-align: center;
+  box-shadow: 3px 3px 0 var(--title-3);
+  animation: dBubble 2.4s ease-in-out infinite;
+}
+.demo-meme .demo-cursor {
+  top: 60px; left: 250px;
+  animation: dCursorMeme 2.4s ease-in-out infinite;
+}
+@keyframes dBubble {
+  0%       { top: -40px; opacity: 1; transform: scale(1); }
+  40%      { top: 50px;  opacity: 1; transform: scale(1); }
+  60%      { top: 60px;  opacity: 1; transform: scale(1); }
+  70%      { top: 60px;  transform: scale(0.2); opacity: 0; }
+  100%     { top: 60px;  opacity: 0; transform: scale(0.2); }
+}
+@keyframes dCursorMeme {
+  0%       { left: 250px; top: 60px; transform: scale(1); }
+  40%      { left: 180px; top: 70px; transform: scale(1); }
+  60%      { left: 180px; top: 70px; transform: scale(0.8); } /* click */
+  75%      { left: 180px; top: 70px; transform: scale(1); }
+  100%     { left: 250px; top: 60px; transform: scale(1); }
+}
+
+/* ---- Demo 3: Fake News: drag alert to trash ---- */
+.demo-fakenews .d-alert {
+  position: absolute; top: 60px; left: 30px;
+  width: 100px; padding: 6px 8px;
+  background: var(--neon-orange);
+  color: var(--text-dark);
+  border: 3px solid var(--neon-red);
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  line-height: 1.1;
+  text-align: center;
+  box-shadow: 3px 3px 0 var(--title-3);
+  animation: dDrag 2.6s ease-in-out infinite;
+}
+.demo-fakenews .d-bin {
+  position: absolute; top: 50px; right: 30px;
+  width: 60px; height: 70px;
+  border: 3px solid var(--neon-red);
+  background: var(--surface);
+  color: var(--neon-red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+}
+.demo-fakenews .demo-cursor {
+  top: 70px; left: 70px;
+  animation: dCursorDrag 2.6s ease-in-out infinite;
+}
+@keyframes dDrag {
+  0%   { transform: translate(0,0); opacity: 1; }
+  20%  { transform: translate(0,0); }
+  70%  { transform: translate(190px, -10px); opacity: 1; }
+  80%  { transform: translate(190px, -10px) scale(0.2); opacity: 0; }
+  100% { transform: translate(0,0); opacity: 0; }
+}
+@keyframes dCursorDrag {
+  0%   { transform: translate(0,0) scale(1); }
+  15%  { transform: translate(0,0) scale(1); }
+  20%  { transform: translate(0,0) scale(0.85); } /* grab */
+  70%  { transform: translate(190px, -10px) scale(0.85); }
+  78%  { transform: translate(190px, -10px) scale(1); } /* release */
+  100% { transform: translate(0,0) scale(1); }
+}
+
+/* ---- Demo 4: Inbox: drag email card to trash ---- */
+.demo-inbox .d-email {
+  position: absolute; top: 50px; left: 30px;
+  width: 100px; padding: 6px 8px;
+  background: var(--neon-yellow);
+  color: var(--text-dark);
+  border: 3px solid var(--title-3);
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  text-align: center;
+  box-shadow: 3px 3px 0 var(--title-3);
+  animation: dDrag 2.6s ease-in-out infinite;
+}
+.demo-inbox .d-trash {
+  position: absolute; top: 50px; right: 30px;
+  width: 60px; height: 70px;
+  border: 3px solid var(--neon-red);
+  background: var(--surface);
+  color: var(--neon-red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+}
+.demo-inbox .demo-cursor {
+  top: 60px; left: 70px;
+  animation: dCursorDrag 2.6s ease-in-out infinite;
+}
+
+/* ---- Demo 5: Phishing: scissors cut a line ---- */
+.demo-phish .d-line {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 100px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 6px var(--neon-cyan);
+}
+.demo-phish .d-bait {
+  position: absolute; top: 110px; left: 50%; transform: translateX(-50%);
+  padding: 6px 12px;
+  background: var(--neon-yellow);
+  color: var(--text-dark);
+  border: 3px solid var(--neon-red);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  animation: dBait 2.4s ease-in-out infinite;
+}
+.demo-phish .demo-scissors-cursor {
+  top: 50px; left: 80px;
+  animation: dScissors 2.4s ease-in-out infinite;
+}
+@keyframes dBait {
+  0%, 65%  { transform: translateX(-50%) translateY(0); opacity: 1; }
+  80%, 100%{ transform: translateX(-50%) translateY(60px) rotate(20deg); opacity: 0; }
+}
+@keyframes dScissors {
+  0%   { left: 80px;  top: 50px; transform: rotate(0deg); }
+  40%  { left: 160px; top: 50px; transform: rotate(0deg); }
+  55%  { left: 160px; top: 50px; transform: rotate(-15deg); } /* snip */
+  70%  { left: 160px; top: 50px; transform: rotate(0deg); }
+  100% { left: 80px;  top: 50px; transform: rotate(0deg); }
+}
+
+/* ===== Feedback Screen ===== */
+#screen-feedback .result {
+  font-size: 40px;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+  text-shadow: 4px 4px 0 var(--title-3);
+}
+#screen-feedback .result.win  { color: #18a040; }
+#screen-feedback .result.lose { color: var(--neon-red); }
+#screen-feedback .tip-card {
+  background: var(--surface);
+  border: 4px solid var(--neon-cyan);
+  padding: 16px 24px;
+  max-width: 720px;
+  position: relative;
+  box-shadow: 6px 6px 0 var(--neon-pink);
+}
+#screen-feedback .tip-card h3 {
+  font-size: 14px;
+  color: var(--title-1);
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
+#screen-feedback .tip-card p {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+#screen-feedback .continue-hint {
+  margin-top: 22px;
+  font-size: 10px;
+  color: var(--neon-cyan);
+  animation: blink 0.8s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ===== Game Over Screen ===== */
+#screen-gameover h2 {
+  font-size: 52px;
+  color: var(--neon-red);
+  text-shadow: 4px 4px 0 var(--neon-yellow), 8px 8px 0 var(--title-3);
+  letter-spacing: 4px;
+  margin-bottom: 18px;
+  animation: shake 0.4s infinite;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+#screen-gameover .gameover-sub {
+  font-size: 14px;
+  color: var(--title-1);
+  margin-bottom: 30px;
+}
+#screen-gameover .rounds-summary {
+  font-family: 'VT323', monospace;
+  font-size: 26px;
+  color: var(--ink);
+  margin-bottom: 36px;
+}
+
+/* ===== Review Screen ===== */
+#screen-review {
+  background: #ffffff;
+}
+#screen-review h2 {
+  font-size: 40px;
+  color: var(--title-1);
+  text-shadow: 4px 4px 0 var(--title-2);
+  margin-bottom: 20px;
+}
+#screen-review .review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 600px;
+}
+#screen-review .review-item {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  background: var(--surface-alt);
+  border: 4px solid;
+  padding: 12px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--title-3);
+  transition: transform 0.1s;
+}
+#screen-review .review-item:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--title-3);
+}
+#screen-review .review-item.won {
+  color: #22C55E;
+  border-color: #22C55E;
+}
+#screen-review .review-item.lost {
+  color: #EF4444;
+  border-color: #EF4444;
+}
+#screen-review .tip-box {
+  display: none;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border: 4px solid var(--neon-cyan);
+  padding: 36px 24px 24px;
+  min-height: 120px;
+  width: 90%;
+  max-width: 800px;
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1.4;
+  box-shadow: 0 0 0 100vw rgba(255,255,255,0.8), 8px 8px 0 var(--neon-pink);
+  z-index: 1000;
+}
+#screen-review .tip-box.active {
+  display: block;
+}
+.tip-close-btn {
+  position: absolute;
+  top: -4px; right: -4px;
+  background: var(--neon-red);
+  color: var(--text-light);
+  border: 4px solid var(--title-3);
+  width: 36px; height: 36px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--title-3);
+}
+.tip-close-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--title-3);
+}
+
+/* ===== Mini-Game Stage ===== */
+#screen-game {
+  padding: 0;
+  display: none;
+}
+#screen-game.active { display: block; }
+#game-area {
+  position: absolute;
+  top: 56px; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+}
+
+/* ===== Generic draggable styles ===== */
+.draggable {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.08s;
+}
+.draggable.dragging { cursor: grabbing; z-index: 100; transform: scale(1.06); }
+
+/* ===== Password Puzzle ===== */
+.pw-title { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--title-1); letter-spacing: 2px; max-width: 880px; text-align: center; line-height: 1.4; }
+.pw-slot-row { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); display: flex; gap: 18px; }
+.pw-slot {
+  width: 88px; height: 88px;
+  border: 4px dashed var(--neon-cyan);
+  background: rgba(0,240,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: rgba(255,255,255,0.4);
+}
+.pw-slot.filled { border-style: solid; background: rgba(57,255,20,0.18); border-color: var(--neon-green); }
+.pw-piece {
+  width: 88px; height: 88px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 38px; font-weight: bold;
+  color: var(--text-dark);
+  border: 4px solid var(--bg-deep);
+  box-shadow: 4px 4px 0 var(--bg-deep);
+}
+.pw-piece.placed { box-shadow: 0 0 16px var(--neon-green); }
+
+/* ===== Meme Shield ===== */
+#game-area.meme-mode { cursor: none; }
+/* Fixed instruction header so falling bubbles never overlap the text. */
+.meme-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 70px;
+  background: var(--surface);
+  border-bottom: 4px solid var(--neon-pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 80px;
+  z-index: 5; /* sits above the falling bubbles */
+  text-align: center;
+  font-size: 12px;
+  color: var(--title-1);
+  letter-spacing: 1.5px;
+  line-height: 1.4;
+}
+.meme-bubble {
+  position: absolute;
+  min-width: 130px; max-width: 200px;
+  padding: 12px 14px;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  text-align: center;
+  border: 4px solid;
+  line-height: 1.1;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--bg-deep);
+  word-wrap: break-word;
+}
+.meme-bubble.bad  { background: var(--neon-red);   color: var(--text-light); border-color: var(--bg-deep); }
+.meme-bubble.good { background: var(--neon-green); color: var(--text-dark);  border-color: var(--bg-deep); }
+.meme-bubble.blocked { animation: deflect 0.4s forwards; pointer-events: none; }
+@keyframes deflect {
+  to { transform: scale(0.2) rotate(45deg); opacity: 0; }
+}
+.meme-bubble.wronged { animation: wrong 0.4s forwards; pointer-events: none; }
+@keyframes wrong {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); background: var(--neon-orange); }
+  100% { transform: scale(0); opacity: 0; }
+}
+#meme-shield-cursor {
+  position: absolute;
+  width: 48px; height: 56px;
+  pointer-events: none;
+  z-index: 200;
+  display: none;
+}
+
+/* ===== Fake News Detective ===== */
+.phone-frame {
+  position: absolute;
+  top: 30px; left: 50%; transform: translateX(-50%);
+  width: 280px; height: 440px;
+  background: var(--bg-deep);
+  border: 8px solid var(--neon-cyan);
+  border-radius: 28px;
+  padding: 20px 14px;
+  box-shadow: 0 0 24px rgba(0,240,255,0.4);
+}
+.phone-screen-title {
+  font-size: 9px;
+  color: var(--neon-yellow);
+  text-align: center;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+.news-alert {
+  padding: 14px;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  line-height: 1.2;
+  cursor: grab;
+  box-shadow: 4px 4px 0 var(--bg-deep);
+  border: 4px solid;
+}
+.news-alert.fake {
+  background: var(--neon-orange);
+  color: var(--text-dark);
+  border-color: var(--neon-red);
+  animation: alertPulse 0.6s ease-in-out infinite alternate;
+}
+.news-alert.true {
+  background: var(--neon-cyan);
+  color: var(--text-dark);
+  border-color: var(--bg-deep);
+}
+@keyframes alertPulse {
+  from { box-shadow: 4px 4px 0 var(--bg-deep), 0 0 0 var(--neon-red); }
+  to   { box-shadow: 4px 4px 0 var(--bg-deep), 0 0 20px var(--neon-red); }
+}
+.recycle-bin, .verified-folder {
+  position: absolute;
+  width: 130px; height: 160px;
+  background: var(--surface);
+  border: 6px solid;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px;
+  box-shadow: 4px 4px 0 var(--title-3);
+}
+.recycle-bin    { right: 60px; bottom: 60px; border-color: var(--neon-red);   color: var(--neon-red); }
+.verified-folder{ right: 60px; top:    80px; border-color: var(--neon-green); color: var(--neon-green); }
+.recycle-bin.hover    { background: var(--neon-red);   color: var(--text-light); }
+.verified-folder.hover{ background: var(--neon-green); color: var(--text-dark); }
+.recycle-bin .bin-icon, .verified-folder .folder-icon { font-size: 48px; line-height: 1; margin-bottom: 6px; }
+
+/* ===== Inbox Cleaner ===== */
+.inbox-zone, .trash-zone {
+  position: absolute;
+  bottom: 30px;
+  width: 200px; height: 170px;
+  border: 6px solid;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  font-size: 12px;
+  text-align: center;
+  background: var(--surface);
+  padding: 10px;
+  box-shadow: 4px 4px 0 var(--title-3);
+}
+.inbox-zone { left: 50px;  border-color: var(--neon-green); color: var(--neon-green); }
+.trash-zone { right: 50px; border-color: var(--neon-red);   color: var(--neon-red); }
+.inbox-zone.hover { background: var(--neon-green); color: var(--text-dark); }
+.trash-zone.hover { background: var(--neon-red);   color: var(--text-light); }
+.inbox-zone .zone-icon, .trash-zone .zone-icon { font-size: 46px; margin-bottom: 6px; line-height: 1; }
+.email-card {
+  position: absolute;
+  width: 280px;
+  padding: 14px;
+  background: var(--text-light);
+  color: var(--text-dark);
+  border: 4px solid var(--bg-deep);
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  line-height: 1.2;
+  cursor: grab;
+  box-shadow: 4px 4px 0 var(--bg-deep);
+  top: 50px; left: 50%; transform: translateX(-50%);
+}
+.email-card .from {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--neon-pink);
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+.email-card.virus { background: var(--neon-yellow); }
+#inbox-progress {
+  position: absolute;
+  top: 10px; left: 50%; transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--neon-yellow);
+  letter-spacing: 2px;
+}
+
+/* ===== Phishing Hook Cut ===== */
+#game-area.phish-mode { cursor: none; }
+.phish-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 6px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  transform: translateX(-50%);
+  cursor: none;
+  z-index: 5;
+  animation: lineSwing 2s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+@keyframes lineSwing {
+  from { transform: translateX(-50%) rotate(-4deg); }
+  to   { transform: translateX(-50%) rotate(4deg); }
+}
+.phish-bait {
+  position: absolute;
+  width: 220px;
+  padding: 18px;
+  background: var(--neon-yellow);
+  color: var(--text-dark);
+  border: 6px solid var(--neon-red);
+  font-size: 14px;
+  text-align: center;
+  letter-spacing: 1px;
+  box-shadow: 0 0 16px var(--neon-yellow);
+  transform: translateX(-50%);
+  left: 50%;
+  animation: baitWiggle 0.6s ease-in-out infinite alternate;
+}
+@keyframes baitWiggle {
+  from { transform: translateX(-50%) scale(1); }
+  to   { transform: translateX(-50%) scale(1.06); }
+}
+.phish-hook {
+  position: absolute;
+  width: 30px; height: 30px;
+  left: 50%; transform: translateX(-50%);
+  border: 5px solid var(--neon-cyan);
+  border-top: none;
+  border-radius: 0 0 100% 100%;
+}
+.scissors-cursor {
+  position: absolute;
+  width: 44px; height: 44px;
+  pointer-events: none;
+  z-index: 200;
+  font-size: 32px;
+  display: flex; align-items: center; justify-content: center;
+}
+.phish-instruction {
+  position: absolute;
+  top: 30px; left: 50%; transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--neon-pink);
+  text-align: center;
+  letter-spacing: 1px;
+}
+.phish-line.cut {
+  animation: lineCut 0.4s forwards;
+}
+@keyframes lineCut {
+  to { transform: translateX(-50%) translateY(20px) rotate(20deg); opacity: 0; }
+}
+.phish-bait.dropped {
+  animation: baitDrop 0.6s forwards;
+}
+@keyframes baitDrop {
+  to { transform: translateX(-50%) translateY(400px) rotate(60deg); opacity: 0.4; }
+}
+
+/* ===== App Permissions (¡Cuidado con los Permisos!) ===== */
+#game-area.perm-mode { background: rgba(13, 2, 33, 0.04); }
+.perm-instruction {
+  position: absolute;
+  top: 24px; left: 50%; transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--title-1);
+  text-align: center;
+  letter-spacing: 1.5px;
+  max-width: 880px;
+  line-height: 1.4;
+}
+.perm-window {
+  position: absolute;
+  top: 80px; left: 50%; transform: translate(-50%, 20px) scale(0.5);
+  width: 520px;
+  background: var(--surface);
+  border: 5px solid var(--ink);
+  box-shadow:
+    8px 8px 0 var(--neon-pink),
+    8px 8px 0 5px var(--ink);
+  opacity: 0;
+  animation: permPopIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes permPopIn {
+  0%   { opacity: 0; transform: translate(-50%, 20px) scale(0.5) rotate(-3deg); }
+  60%  { opacity: 1; transform: translate(-50%, -10px) scale(1.05) rotate(1deg); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(0deg); }
+}
+.perm-titlebar {
+  background: var(--title-1);
+  color: var(--text-light);
+  padding: 8px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 4px solid var(--ink);
+}
+.perm-titlebar-left { display: flex; align-items: center; gap: 10px; }
+.perm-titlebar .perm-warn-icon {
+  display: inline-block;
+  width: 18px; height: 18px;
+  background: var(--neon-yellow);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  text-align: center;
+  line-height: 14px;
+  animation: permWarnBlink 0.6s steps(2) infinite;
+}
+@keyframes permWarnBlink { 50% { background: var(--neon-orange); } }
+.perm-titlebar-buttons { display: flex; gap: 4px; }
+.perm-tb-btn {
+  width: 18px; height: 18px;
+  background: var(--surface-alt);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  text-align: center;
+  line-height: 14px;
+}
+.perm-body {
+  padding: 24px 28px 28px;
+  text-align: center;
+}
+.perm-app-icon {
+  display: inline-block;
+  width: 80px; height: 80px;
+  background: var(--surface-alt);
+  border: 4px solid var(--neon-cyan);
+  font-size: 48px;
+  line-height: 76px;
+  text-align: center;
+  margin-bottom: 14px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.perm-question {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+.perm-question .perm-app-name {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--neon-yellow);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin: 0 2px;
+}
+.perm-permission-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-alt);
+  border: 3px solid var(--neon-red);
+  padding: 10px 16px;
+  margin: 4px 0 18px;
+  box-shadow: 3px 3px 0 var(--ink);
+  animation: permRedFlash 1s ease-in-out infinite alternate;
+}
+@keyframes permRedFlash {
+  from { box-shadow: 3px 3px 0 var(--ink), 0 0 0 rgba(255,18,79,0); }
+  to   { box-shadow: 3px 3px 0 var(--ink), 0 0 18px rgba(255,18,79,0.55); }
+}
+.perm-permission-icon { font-size: 28px; line-height: 1; }
+.perm-permission-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--neon-red);
+  letter-spacing: 2px;
+}
+.perm-buttons {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.perm-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  padding: 14px 22px;
+  border: 4px solid var(--ink);
+  cursor: pointer;
+  color: var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+  min-width: 150px;
+}
+.perm-btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+.perm-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+.perm-btn.allow { background: var(--neon-red);   color: var(--text-light); }
+.perm-btn.deny  { background: var(--neon-green); color: var(--ink); }
+.perm-window.correct { animation: permCorrectFlash 0.5s ease-out forwards; }
+@keyframes permCorrectFlash {
+  0%   { box-shadow: 8px 8px 0 var(--neon-pink), 8px 8px 0 5px var(--ink), 0 0 0 0 rgba(57,255,20,0); }
+  50%  { transform: translate(-50%, -4px) scale(1.03); box-shadow: 8px 8px 0 var(--neon-green), 8px 8px 0 5px var(--ink), 0 0 40px 8px rgba(57,255,20,0.6); }
+  100% { transform: translate(-50%, 30px) scale(0.7); opacity: 0; }
+}
+.perm-window.wrong { animation: permWrongShake 0.5s ease-in-out forwards; }
+@keyframes permWrongShake {
+  0%, 100% { transform: translate(-50%, 0) scale(1); }
+  20%      { transform: translate(calc(-50% - 12px), 0) scale(1) rotate(-2deg); background: #ffe5ec; }
+  40%      { transform: translate(calc(-50% + 12px), 0) scale(1) rotate(2deg); background: #ffe5ec; }
+  60%      { transform: translate(calc(-50% - 10px), 0) scale(1.02) rotate(-1deg); }
+  80%      { transform: translate(calc(-50% + 10px), 0) scale(1.02) rotate(1deg); }
+}
+
+/* ---- Demo: App Permissions (looping tutorial) ---- */
+.demo-perm {
+  background: var(--surface-alt);
+}
+.demo-perm .d-window {
+  position: absolute;
+  top: 20px; left: 50%; transform: translateX(-50%);
+  width: 280px;
+  background: var(--surface);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--neon-pink);
+}
+.demo-perm .d-titlebar {
+  background: var(--title-1);
+  color: var(--text-light);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 4px 6px;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--ink);
+}
+.demo-perm .d-body {
+  padding: 10px 8px;
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.2;
+}
+.demo-perm .d-app { font-size: 28px; }
+.demo-perm .d-perm-tag {
+  display: inline-block;
+  background: #ffe5ec;
+  border: 2px solid var(--neon-red);
+  color: var(--neon-red);
+  padding: 2px 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  margin: 4px 0;
+}
+.demo-perm .d-btn-row { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+.demo-perm .d-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  border: 2px solid var(--ink);
+  padding: 4px 6px;
+  letter-spacing: 1px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.demo-perm .d-btn.allow { background: var(--neon-red);   color: var(--text-light); }
+.demo-perm .d-btn.deny  { background: var(--neon-green); color: var(--ink); animation: dDenyHL 1.4s ease-in-out infinite; }
+@keyframes dDenyHL {
+  0%, 100% { box-shadow: 2px 2px 0 var(--ink); }
+  50%      { box-shadow: 2px 2px 0 var(--ink), 0 0 10px var(--neon-green); transform: scale(1.05); }
+}
+.demo-perm .demo-cursor {
+  top: 110px; left: 90px;
+  animation: dCursorPerm 1.4s ease-in-out infinite;
+}
+@keyframes dCursorPerm {
+  0%   { transform: translate(0, 0) scale(1); }
+  45%  { transform: translate(80px, 0) scale(1); }
+  55%  { transform: translate(80px, 0) scale(0.8); } /* click */
+  70%  { transform: translate(80px, 0) scale(1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* =========================================================
+   NEW MINI-GAMES STYLES (think-before-post, url-detective,
+   download-warning, screen-lock, 2fa-quiz, cookies-banner)
+   ========================================================= */
+
+/* ---- Think Before You Post ---- */
+.post-instruction {
+  position: absolute;
+  top: 18px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.post-composer {
+  position: absolute;
+  top: 80px; left: 50%; transform: translateX(-50%);
+  width: 520px;
+  background: var(--surface);
+  border: 5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--neon-pink), 8px 8px 0 5px var(--ink);
+  animation: postSlideIn 0.4s ease-out;
+}
+@keyframes postSlideIn {
+  from { transform: translate(-50%, -30px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+.post-header {
+  background: #1da1f2;
+  color: var(--text-light);
+  padding: 8px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  border-bottom: 4px solid var(--ink);
+  display: flex; align-items: center; gap: 10px;
+}
+.post-avatar {
+  width: 32px; height: 32px;
+  background: var(--neon-yellow);
+  border: 2px solid var(--ink);
+  font-size: 22px; line-height: 28px; text-align: center;
+}
+.post-body {
+  padding: 22px 24px 18px;
+  font-family: 'VT323', monospace;
+  font-size: 26px;
+  color: var(--ink);
+  line-height: 1.3;
+  min-height: 120px;
+}
+.post-buttons {
+  display: flex; gap: 16px; padding: 12px 20px 22px; justify-content: center;
+}
+.post-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px; letter-spacing: 2px;
+  padding: 14px 22px; border: 4px solid var(--ink);
+  cursor: pointer; color: var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+  min-width: 180px;
+}
+.post-btn:hover { transform: translate(-1px,-1px); box-shadow: 6px 6px 0 var(--ink); }
+.post-btn:active { transform: translate(3px,3px); box-shadow: 2px 2px 0 var(--ink); }
+.post-btn.post  { background: var(--neon-cyan); color: var(--ink); }
+.post-btn.think { background: var(--neon-yellow); color: var(--ink); }
+.post-composer.correct { animation: permCorrectFlash 0.5s ease-out forwards; }
+.post-composer.wrong   { animation: permWrongShake 0.5s ease-in-out forwards; }
+
+/* ---- URL Detective ---- */
+.url-instruction {
+  position: absolute;
+  top: 20px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.url-browser-bar {
+  position: absolute;
+  top: 90px; left: 50%; transform: translateX(-50%);
+  width: 620px;
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  padding: 8px 14px;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: var(--ink-soft);
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 4px 4px 0 var(--neon-pink);
+}
+.url-browser-bar .lock-icon {
+  width: 22px; height: 22px;
+  background: var(--neon-yellow);
+  border: 2px solid var(--ink);
+  font-size: 14px; text-align: center; line-height: 18px;
+}
+.url-target-text {
+  position: absolute;
+  top: 150px; left: 50%; transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px; color: var(--neon-pink);
+  letter-spacing: 1.5px;
+}
+.url-grid {
+  position: absolute;
+  top: 200px; left: 50%; transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 720px;
+}
+.url-card {
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  padding: 18px 16px;
+  font-family: 'VT323', monospace;
+  font-size: 28px;
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 var(--neon-cyan);
+  letter-spacing: 1px;
+  transition: transform 0.1s;
+  user-select: text;
+}
+.url-card:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 var(--neon-cyan); }
+.url-card.correct { background: var(--neon-green); animation: urlCorrect 0.5s ease-out forwards; }
+.url-card.wrong   { background: var(--neon-red); color: var(--text-light); animation: urlWrong 0.4s ease-in-out forwards; }
+@keyframes urlCorrect { 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes urlWrong {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* ---- Download Warning (reuses perm-* styles, just new accents) ---- */
+.dl-file-icon {
+  display: inline-block;
+  width: 80px; height: 80px;
+  background: var(--surface-alt);
+  border: 4px solid var(--neon-orange);
+  font-size: 44px;
+  line-height: 76px; text-align: center;
+  margin-bottom: 12px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.dl-filename {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--neon-red);
+  letter-spacing: 1px;
+  padding: 10px 14px;
+  background: #fff3e0;
+  border: 3px solid var(--neon-orange);
+  display: inline-block;
+  margin: 4px 0 14px;
+  box-shadow: 3px 3px 0 var(--ink);
+  word-break: break-all;
+}
+.dl-size {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+.dl-btn.continue { background: var(--neon-red);   color: var(--text-light); }
+.dl-btn.cancel   { background: var(--neon-green); color: var(--ink); }
+
+/* ---- Screen Lock ---- */
+.lock-instruction {
+  position: absolute;
+  top: 18px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.lock-phone {
+  position: absolute;
+  top: 60px; left: 50%; transform: translateX(-50%);
+  width: 260px; height: 380px;
+  background: var(--bg-deep);
+  border: 8px solid var(--ink);
+  border-radius: 28px;
+  padding: 16px 12px;
+  box-shadow: 0 0 0 4px var(--neon-cyan), 8px 8px 0 var(--neon-pink);
+}
+.lock-phone.locked { background: var(--ink); border-color: var(--neon-green); }
+.lock-phone-screen {
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #2a1a4a, #4a2a6a);
+  border: 2px solid var(--neon-cyan);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  align-content: start;
+}
+.lock-app-tile {
+  background: var(--surface-alt);
+  border: 2px solid var(--ink);
+  font-size: 20px;
+  text-align: center;
+  padding: 6px 0;
+  font-family: 'VT323', monospace;
+  color: var(--ink);
+}
+.lock-phone.locked .lock-phone-screen {
+  background: var(--bg-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 64px; color: var(--neon-green);
+}
+.lock-phone.locked .lock-app-tile { display: none; }
+.lock-spy {
+  position: absolute;
+  bottom: 20px; left: -120px;
+  width: 80px; height: 80px;
+  font-size: 60px;
+  animation: spyApproach 12s linear forwards;
+  z-index: 10;
+}
+@keyframes spyApproach {
+  from { left: -120px; }
+  to   { left: 380px; }
+}
+.lock-pad {
+  position: absolute;
+  bottom: 60px; left: 80px;
+  width: 90px; height: 110px;
+  background: var(--neon-yellow);
+  border: 5px solid var(--ink);
+  font-size: 56px;
+  text-align: center;
+  line-height: 100px;
+  cursor: grab;
+  box-shadow: 6px 6px 0 var(--ink);
+  z-index: 50;
+}
+.lock-pad.dragging { cursor: grabbing; }
+.lock-target-hint {
+  position: absolute;
+  bottom: 30px; left: 60px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--neon-pink);
+  letter-spacing: 1px;
+  width: 130px;
+  text-align: center;
+}
+
+/* ---- 2FA Quiz ---- */
+.tfa-instruction {
+  position: absolute;
+  top: 18px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.tfa-notification {
+  position: absolute;
+  top: 60px; left: 60px;
+  width: 280px;
+  background: var(--surface);
+  border: 4px solid var(--neon-cyan);
+  padding: 12px 14px;
+  box-shadow: 5px 5px 0 var(--neon-pink);
+  animation: tfaNotifPulse 1.5s ease-in-out infinite alternate;
+}
+@keyframes tfaNotifPulse {
+  from { box-shadow: 5px 5px 0 var(--neon-pink), 0 0 0 rgba(0,240,255,0); }
+  to   { box-shadow: 5px 5px 0 var(--neon-pink), 0 0 24px rgba(0,240,255,0.6); }
+}
+.tfa-notif-header {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--title-1);
+  letter-spacing: 1.5px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 8px;
+}
+.tfa-notif-text {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.tfa-code {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 28px;
+  color: var(--neon-pink);
+  letter-spacing: 8px;
+  text-align: center;
+  padding: 8px 0;
+  background: var(--surface-alt);
+  border: 3px solid var(--ink);
+}
+.tfa-login {
+  position: absolute;
+  top: 60px; right: 60px;
+  width: 320px;
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  padding: 16px;
+  box-shadow: 5px 5px 0 var(--neon-cyan);
+}
+.tfa-login-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--title-1);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.tfa-slots {
+  display: flex; gap: 10px; justify-content: center; margin: 14px 0;
+}
+.tfa-slot {
+  width: 48px; height: 56px;
+  background: var(--surface-alt);
+  border: 3px solid var(--neon-cyan);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 22px;
+  color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+}
+.tfa-slot.active { border-color: var(--neon-pink); animation: tfaSlotPulse 0.5s ease-in-out infinite alternate; }
+.tfa-slot.filled { background: var(--neon-green); }
+@keyframes tfaSlotPulse { to { box-shadow: 0 0 12px var(--neon-pink); } }
+.tfa-keypad {
+  position: absolute;
+  bottom: 50px; left: 50%; transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 240px;
+}
+.tfa-key {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  background: var(--neon-yellow);
+  border: 4px solid var(--ink);
+  color: var(--ink);
+  padding: 14px 0;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.tfa-key:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink); }
+.tfa-key:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+.tfa-key.wrong { background: var(--neon-red); color: var(--text-light); animation: permWrongShake 0.4s; }
+
+/* ---- Cookies Banner ---- */
+.cookie-browser {
+  position: absolute;
+  top: 60px; left: 50%; transform: translateX(-50%);
+  width: 720px; height: 380px;
+  background: var(--surface);
+  border: 5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--neon-cyan), 8px 8px 0 5px var(--ink);
+  overflow: hidden;
+}
+.cookie-browser-bar {
+  background: var(--surface-alt);
+  border-bottom: 3px solid var(--ink);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+.cookie-browser-bar .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink); }
+.cookie-browser-bar .dot.r { background: var(--neon-red); }
+.cookie-browser-bar .dot.y { background: var(--neon-yellow); }
+.cookie-browser-bar .dot.g { background: var(--neon-green); }
+.cookie-browser-bar .url-text {
+  flex: 1; background: var(--surface); border: 2px solid var(--ink); padding: 2px 10px;
+  font-size: 16px;
+}
+.cookie-page {
+  padding: 20px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--ink-soft);
+  line-height: 1.3;
+  background: repeating-linear-gradient(45deg, var(--surface), var(--surface) 10px, var(--surface-alt) 10px, var(--surface-alt) 20px);
+  height: calc(100% - 42px);
+}
+.cookie-banner {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  color: var(--text-light);
+  padding: 16px 20px;
+  border-top: 5px solid var(--neon-yellow);
+  animation: cookieSlideUp 0.5s ease-out;
+}
+@keyframes cookieSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.cookie-banner-row { display: flex; align-items: center; gap: 14px; }
+.cookie-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  animation: cookieWobble 1.2s ease-in-out infinite;
+}
+@keyframes cookieWobble { 50% { transform: rotate(15deg); } }
+.cookie-text {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  line-height: 1.2;
+  flex: 1;
+}
+.cookie-buttons { display: flex; gap: 10px; }
+.cookie-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 12px 14px;
+  border: 3px solid var(--text-light);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--neon-pink);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.cookie-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--neon-pink); }
+.cookie-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--neon-pink); }
+.cookie-btn.accept { background: var(--neon-red); color: var(--text-light); }
+.cookie-btn.necessary { background: var(--neon-green); color: var(--ink); border-color: var(--ink); }
+
+/* ---- Demos for new mini-games (intro tutorial loops) ---- */
+.demo-post .d-card {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  width: 280px; background: var(--surface);
+  border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--neon-pink);
+}
+.demo-post .d-card-header {
+  background: #1da1f2; color: var(--text-light);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px; padding: 4px 6px; border-bottom: 2px solid var(--ink);
+}
+.demo-post .d-card-body {
+  font-family: 'VT323', monospace; font-size: 14px;
+  color: var(--ink); padding: 8px;
+}
+.demo-post .d-card-btns { display: flex; gap: 6px; padding: 4px 6px 8px; }
+.demo-post .d-card-btn {
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  border: 2px solid var(--ink); padding: 4px 5px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.demo-post .d-card-btn.post  { background: var(--neon-cyan); color: var(--ink); }
+.demo-post .d-card-btn.think { background: var(--neon-yellow); color: var(--ink); animation: dDenyHL 1.4s ease-in-out infinite; }
+.demo-post .demo-cursor { top: 110px; left: 90px; animation: dCursorPerm 1.4s ease-in-out infinite; }
+
+.demo-url .d-grid {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 280px;
+}
+.demo-url .d-url {
+  background: var(--surface); border: 2px solid var(--ink);
+  padding: 8px 4px; font-family: 'VT323', monospace; font-size: 14px;
+  color: var(--ink); text-align: center;
+  box-shadow: 2px 2px 0 var(--neon-cyan);
+}
+.demo-url .d-url.real { background: var(--neon-green); animation: dDenyHL 1.4s ease-in-out infinite; }
+.demo-url .demo-cursor { top: 50px; left: 130px; animation: dCursorUrl 1.4s ease-in-out infinite; }
+@keyframes dCursorUrl {
+  0%, 30% { transform: translate(60px, 0) scale(1); }
+  60% { transform: translate(-60px, 50px) scale(1); }
+  70% { transform: translate(-60px, 50px) scale(0.8); }
+  85% { transform: translate(-60px, 50px) scale(1); }
+  100% { transform: translate(60px, 0) scale(1); }
+}
+
+.demo-dl .d-window {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  width: 280px; background: var(--surface);
+  border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--neon-pink);
+}
+.demo-dl .d-titlebar {
+  background: var(--neon-orange); color: var(--ink);
+  font-family: 'Press Start 2P', monospace; font-size: 8px;
+  padding: 4px 6px; letter-spacing: 1px; border-bottom: 2px solid var(--ink);
+}
+.demo-dl .d-body {
+  padding: 8px; font-family: 'VT323', monospace; font-size: 14px;
+  color: var(--ink); text-align: center;
+}
+.demo-dl .d-filename {
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  background: #fff3e0; border: 2px solid var(--neon-orange);
+  color: var(--neon-red); padding: 4px 6px; margin: 4px 0;
+  display: inline-block; letter-spacing: 1px;
+}
+.demo-dl .d-btn-row { display: flex; justify-content: center; gap: 6px; }
+.demo-dl .d-btn {
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  border: 2px solid var(--ink); padding: 4px 5px;
+  box-shadow: 2px 2px 0 var(--ink); letter-spacing: 1px;
+}
+.demo-dl .d-btn.continue { background: var(--neon-red); color: var(--text-light); }
+.demo-dl .d-btn.cancel   { background: var(--neon-green); color: var(--ink); animation: dDenyHL 1.4s ease-in-out infinite; }
+.demo-dl .demo-cursor { top: 105px; left: 95px; animation: dCursorPerm 1.4s ease-in-out infinite; }
+
+.demo-lock .d-phone {
+  position: absolute; top: 16px; left: 60%;
+  width: 90px; height: 130px;
+  background: var(--bg-deep); border: 3px solid var(--neon-cyan);
+  border-radius: 10px; padding: 6px;
+}
+.demo-lock .d-phone-screen {
+  width: 100%; height: 100%;
+  background: #2a1a4a; border: 1px solid var(--neon-cyan);
+}
+.demo-lock .d-pad {
+  position: absolute; top: 60px; left: 30px;
+  width: 36px; height: 44px;
+  background: var(--neon-yellow); border: 2px solid var(--ink);
+  font-size: 24px; text-align: center; line-height: 38px;
+  box-shadow: 2px 2px 0 var(--ink);
+  animation: dLockDrag 2.2s ease-in-out infinite;
+}
+@keyframes dLockDrag {
+  0%, 15% { transform: translate(0, 0); }
+  50%, 70% { transform: translate(170px, -20px); }
+  100% { transform: translate(0, 0); }
+}
+.demo-lock .demo-cursor { top: 70px; left: 50px; animation: dLockCursor 2.2s ease-in-out infinite; }
+@keyframes dLockCursor {
+  0%, 15% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(0, 0) scale(0.8); }
+  50%, 70% { transform: translate(170px, -20px) scale(0.8); }
+  80% { transform: translate(170px, -20px) scale(1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.demo-tfa .d-notif {
+  position: absolute; top: 18px; left: 20px;
+  width: 150px; background: var(--surface);
+  border: 2px solid var(--neon-cyan); padding: 6px;
+  box-shadow: 3px 3px 0 var(--neon-pink);
+}
+.demo-tfa .d-notif-code {
+  font-family: 'Press Start 2P', monospace; font-size: 14px;
+  color: var(--neon-pink); letter-spacing: 4px;
+  text-align: center; padding: 4px;
+  background: var(--surface-alt); border: 2px solid var(--ink); margin-top: 4px;
+}
+.demo-tfa .d-notif-label {
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  color: var(--title-1); text-align: center;
+}
+.demo-tfa .d-slots {
+  position: absolute; top: 60px; right: 30px;
+  display: flex; gap: 4px;
+}
+.demo-tfa .d-slot {
+  width: 22px; height: 28px; background: var(--surface-alt);
+  border: 2px solid var(--neon-cyan);
+  font-family: 'Press Start 2P', monospace; font-size: 10px;
+  color: var(--ink); display: flex; align-items: center; justify-content: center;
+  animation: dSlotFill 2s steps(4) infinite;
+}
+.demo-tfa .d-slot:nth-child(1) { animation-delay: 0s; }
+.demo-tfa .d-slot:nth-child(2) { animation-delay: 0.5s; }
+.demo-tfa .d-slot:nth-child(3) { animation-delay: 1s; }
+.demo-tfa .d-slot:nth-child(4) { animation-delay: 1.5s; }
+@keyframes dSlotFill {
+  0%, 60% { background: var(--surface-alt); }
+  70%, 100% { background: var(--neon-green); }
+}
+.demo-tfa .demo-cursor { top: 110px; right: 140px; animation: dTfaCursor 2s linear infinite; }
+@keyframes dTfaCursor {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(80px, -40px); }
+}
+
+.demo-cookie .d-banner {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  width: 300px; background: var(--ink);
+  color: var(--text-light); padding: 8px 10px;
+  border-top: 3px solid var(--neon-yellow);
+  display: flex; align-items: center; gap: 6px;
+}
+.demo-cookie .d-cookie-icon { font-size: 18px; animation: cookieWobble 1.2s ease-in-out infinite; }
+.demo-cookie .d-cookie-text {
+  font-family: 'VT323', monospace; font-size: 11px; flex: 1; line-height: 1.1;
+}
+.demo-cookie .d-c-btn {
+  font-family: 'Press Start 2P', monospace; font-size: 6px;
+  padding: 3px 4px; border: 2px solid var(--text-light); letter-spacing: 1px;
+}
+.demo-cookie .d-c-btn.accept { background: var(--neon-red); color: var(--text-light); }
+.demo-cookie .d-c-btn.nec    { background: var(--neon-green); color: var(--ink); border-color: var(--ink); animation: dDenyHL 1.4s ease-in-out infinite; }
+.demo-cookie .demo-cursor { bottom: 18px; right: 30px; animation: dCookieCursor 1.6s ease-in-out infinite; }
+@keyframes dCookieCursor {
+  0%, 30% { transform: translate(0, 0) scale(1); }
+  60% { transform: translate(-50px, 0) scale(1); }
+  70% { transform: translate(-50px, 0) scale(0.8); }
+  85% { transform: translate(-50px, 0) scale(1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ---- Help a Friend ---- */
+.help-instruction {
+  position: absolute;
+  top: 14px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.help-friend-card {
+  position: absolute;
+  top: 56px; left: 50%; transform: translateX(-50%);
+  width: 600px;
+  background: var(--surface);
+  border: 5px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--neon-pink), 6px 6px 0 5px var(--ink);
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 18px;
+  animation: postSlideIn 0.4s ease-out;
+}
+.help-friend-avatar {
+  width: 70px; height: 70px;
+  background: var(--neon-yellow);
+  border: 4px solid var(--ink);
+  font-size: 44px;
+  text-align: center;
+  line-height: 62px;
+  flex-shrink: 0;
+  box-shadow: 3px 3px 0 var(--ink);
+  animation: helpAvatarShake 1.2s ease-in-out infinite;
+}
+@keyframes helpAvatarShake {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-2px) rotate(3deg); }
+}
+.help-bubble {
+  flex: 1;
+  background: var(--surface-alt);
+  border: 3px solid var(--neon-cyan);
+  padding: 10px 14px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.2;
+  position: relative;
+}
+.help-bubble::before {
+  content: '';
+  position: absolute;
+  left: -14px; top: 24px;
+  width: 0; height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 14px solid var(--neon-cyan);
+}
+.help-prompt {
+  position: absolute;
+  top: 200px; left: 50%; transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--neon-pink);
+  letter-spacing: 1.5px;
+  text-align: center;
+}
+.help-options {
+  position: absolute;
+  top: 240px; left: 50%; transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 760px;
+}
+.help-option {
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  padding: 14px 16px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 var(--neon-cyan);
+  transition: transform 0.1s, box-shadow 0.1s;
+  line-height: 1.2;
+}
+.help-option:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 var(--neon-cyan); }
+.help-option.correct { background: var(--neon-green); animation: urlCorrect 0.5s ease-out forwards; }
+.help-option.wrong   { background: var(--neon-red); color: var(--text-light); animation: urlWrong 0.4s ease-in-out forwards; }
+
+/* ---- Empathy Express ---- */
+.emp-instruction {
+  position: absolute;
+  top: 14px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.emp-post {
+  position: absolute;
+  top: 60px; left: 50%; transform: translateX(-50%);
+  width: 560px;
+  background: var(--surface);
+  border: 5px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--neon-pink), 6px 6px 0 5px var(--ink);
+  animation: postSlideIn 0.4s ease-out;
+}
+.emp-post-header {
+  background: var(--neon-cyan);
+  color: var(--ink);
+  padding: 8px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  border-bottom: 4px solid var(--ink);
+  display: flex; align-items: center; gap: 10px;
+}
+.emp-post-avatar {
+  width: 32px; height: 32px;
+  background: var(--neon-yellow);
+  border: 2px solid var(--ink);
+  font-size: 22px; line-height: 28px; text-align: center;
+}
+.emp-post-body {
+  padding: 22px 24px;
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1.3;
+  min-height: 80px;
+  text-align: center;
+}
+.emp-post.drop-hover {
+  background: #ffffe0;
+  box-shadow: 6px 6px 0 var(--neon-green), 6px 6px 0 5px var(--ink);
+}
+.emp-hint {
+  position: absolute;
+  top: 250px; left: 50%; transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--title-1);
+  letter-spacing: 1.5px;
+  text-align: center;
+}
+.emp-sticker {
+  /* Each sticker is position:absolute via .draggable; we set left/top manually */
+  width: 70px; height: 70px;
+  background: var(--surface);
+  border: 4px solid var(--ink);
+  font-size: 44px;
+  line-height: 62px;
+  text-align: center;
+  cursor: grab;
+  box-shadow: 4px 4px 0 var(--neon-pink);
+  transition: transform 0.15s;
+}
+.emp-sticker:hover { transform: translateY(-4px) rotate(-5deg); }
+.emp-sticker.dragging { cursor: grabbing; opacity: 0.9; z-index: 100; }
+.emp-post.correct { animation: permCorrectFlash 0.6s ease-out forwards; }
+.emp-post.wrong   { animation: permWrongShake 0.5s ease-in-out forwards; }
+
+/* ---- Phone Scam ---- */
+.scam-instruction {
+  position: absolute;
+  top: 14px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--title-1);
+  letter-spacing: 1.5px; text-align: center;
+  max-width: 880px; line-height: 1.4;
+}
+.scam-phone {
+  position: absolute;
+  top: 60px; left: 50%; transform: translateX(-50%);
+  width: 300px;
+  background: var(--ink);
+  border: 6px solid var(--ink);
+  border-radius: 30px;
+  padding: 24px 18px;
+  box-shadow: 0 0 0 4px var(--neon-cyan), 8px 8px 0 var(--neon-pink);
+}
+.scam-phone-screen {
+  background: linear-gradient(180deg, #1a0a3a, #3a1a5a);
+  border: 3px solid var(--neon-red);
+  padding: 14px 12px;
+  font-family: 'VT323', monospace;
+  color: var(--text-light);
+  text-align: center;
+  position: relative;
+  animation: scamRing 0.4s ease-in-out infinite alternate;
+}
+@keyframes scamRing {
+  from { box-shadow: inset 0 0 0 rgba(255,18,79,0); }
+  to   { box-shadow: inset 0 0 24px rgba(255,18,79,0.5); }
+}
+.scam-incoming {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--neon-yellow);
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+  animation: scamBlink 0.6s steps(2) infinite;
+}
+@keyframes scamBlink { 50% { opacity: 0.3; } }
+.scam-caller-id {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: var(--neon-red);
+  letter-spacing: 1.5px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-top: 2px dashed var(--neon-red);
+  border-bottom: 2px dashed var(--neon-red);
+}
+.scam-icon { font-size: 38px; margin-bottom: 6px; }
+.scam-bubble {
+  position: absolute;
+  top: 110px; right: 50px;
+  width: 240px;
+  background: var(--surface);
+  border: 4px solid var(--neon-red);
+  padding: 12px 14px;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  color: var(--ink);
+  line-height: 1.2;
+  box-shadow: 4px 4px 0 var(--ink);
+  animation: scamBubblePop 0.5s ease-out 0.3s both;
+}
+.scam-bubble::before {
+  content: '';
+  position: absolute;
+  left: -16px; top: 30px;
+  width: 0; height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 16px solid var(--ink);
+}
+.scam-bubble::after {
+  content: '';
+  position: absolute;
+  left: -10px; top: 32px;
+  width: 0; height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 12px solid var(--surface);
+}
+@keyframes scamBubblePop {
+  0%   { opacity: 0; transform: translateX(-20px) scale(0.5); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.scam-bubble.left {
+  right: auto; left: 50px;
+}
+.scam-bubble.left::before {
+  left: auto; right: -16px;
+  border-right: none;
+  border-left: 16px solid var(--ink);
+}
+.scam-bubble.left::after {
+  left: auto; right: -10px;
+  border-right: none;
+  border-left: 12px solid var(--surface);
+}
+.scam-buttons {
+  position: absolute;
+  bottom: 40px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 22px;
+}
+.scam-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  padding: 16px 24px;
+  border: 4px solid var(--ink);
+  cursor: pointer;
+  color: var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+  min-width: 180px;
+}
+.scam-btn:hover { transform: translate(-1px,-1px); box-shadow: 6px 6px 0 var(--ink); }
+.scam-btn:active { transform: translate(3px,3px); box-shadow: 2px 2px 0 var(--ink); }
+.scam-btn.give { background: var(--neon-red); color: var(--text-light); }
+.scam-btn.hang { background: var(--neon-green); color: var(--ink); }
+.scam-phone.correct { animation: permCorrectFlash 0.6s ease-out forwards; }
+.scam-phone.wrong   { animation: permWrongShake 0.5s ease-in-out forwards; }
+
+/* ---- Demos for the 3 new minigames ---- */
+.demo-help .d-avatar {
+  position: absolute; top: 24px; left: 30px;
+  width: 36px; height: 36px;
+  background: var(--neon-yellow); border: 2px solid var(--ink);
+  font-size: 22px; text-align: center; line-height: 32px;
+  animation: helpAvatarShake 1.2s ease-in-out infinite;
+}
+.demo-help .d-bubble {
+  position: absolute; top: 22px; left: 78px;
+  width: 200px;
+  background: var(--surface-alt); border: 2px solid var(--neon-cyan);
+  padding: 4px 8px;
+  font-family: 'VT323', monospace; font-size: 12px; color: var(--ink);
+}
+.demo-help .d-cards {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 280px;
+}
+.demo-help .d-card {
+  background: var(--surface); border: 2px solid var(--ink);
+  padding: 4px 6px; font-family: 'VT323', monospace; font-size: 11px;
+  color: var(--ink); text-align: center; box-shadow: 2px 2px 0 var(--neon-cyan);
+}
+.demo-help .d-card.good { background: var(--neon-green); animation: dDenyHL 1.4s ease-in-out infinite; }
+.demo-help .demo-cursor { top: 110px; left: 90px; animation: dCursorPerm 1.4s ease-in-out infinite; }
+
+.demo-emp .d-post {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  width: 220px;
+  background: var(--surface); border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--neon-pink);
+}
+.demo-emp .d-post-h {
+  background: var(--neon-cyan);
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  padding: 3px 6px; color: var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.demo-emp .d-post-b {
+  padding: 8px;
+  font-family: 'VT323', monospace; font-size: 13px;
+  color: var(--ink); text-align: center;
+}
+.demo-emp .d-stickers {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+}
+.demo-emp .d-sticker {
+  width: 28px; height: 28px;
+  background: var(--surface); border: 2px solid var(--ink);
+  font-size: 18px; line-height: 24px; text-align: center;
+  box-shadow: 2px 2px 0 var(--neon-pink);
+}
+.demo-emp .d-sticker.right { animation: dEmpFly 2s ease-in-out infinite; }
+@keyframes dEmpFly {
+  0%, 20% { transform: translate(0, 0) scale(1); }
+  50%, 70% { transform: translate(40px, -70px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.demo-scam .d-phone {
+  position: absolute; top: 16px; left: 30%;
+  width: 80px; height: 130px;
+  background: var(--ink); border: 3px solid var(--neon-cyan);
+  border-radius: 14px; padding: 6px;
+}
+.demo-scam .d-phone-screen {
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #1a0a3a, #3a1a5a);
+  border: 1px solid var(--neon-red);
+  padding: 4px;
+  font-family: 'Press Start 2P', monospace; font-size: 6px;
+  color: var(--neon-red); text-align: center; letter-spacing: 0.5px;
+  animation: scamBlink 0.6s steps(2) infinite;
+}
+.demo-scam .d-phone-icon { font-size: 16px; margin-bottom: 2px; }
+.demo-scam .d-btn-row { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.demo-scam .d-btn {
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  border: 2px solid var(--ink); padding: 4px 5px;
+  box-shadow: 2px 2px 0 var(--ink); letter-spacing: 1px;
+}
+.demo-scam .d-btn.give { background: var(--neon-red); color: var(--text-light); }
+.demo-scam .d-btn.hang { background: var(--neon-green); color: var(--ink); animation: dDenyHL 1.4s ease-in-out infinite; }
+.demo-scam .demo-cursor { bottom: 16px; right: 40px; animation: dCookieCursor 1.6s ease-in-out infinite; }
+
+/* ===== Particle FX ===== */
+.fx-particle {
+  position: absolute;
+  width: 8px; height: 8px;
+  pointer-events: none;
+  z-index: 300;
+}
+
+/* Scaling is now fully handled by JavaScript fitStage() */
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <button id="btn-home" class="pixel-btn red" style="padding: 4px 8px; font-size: 14px; min-height: 0; min-width: 0; pointer-events: auto;" data-i18n="homeBtn">HOME</button>
+      <div id="lives" data-testid="lives-display"></div>
+    </div>
+    <div id="timer-wrap">
+      <div id="timer-label" data-i18n="time">TIME</div>
+      <div id="timer-bar-bg"><div id="timer-bar" data-testid="timer-bar"></div></div>
+    </div>
+    <div id="round-label" data-testid="round-label">ROUND 1</div>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="screen-start" class="screen active" data-testid="screen-start">
+    <h1 data-testid="game-title">HACKERWARE</h1>
+    <div class="subtitle" data-i18n="subtitle">CYBER SAFETY MICRO-GAMES</div>
+    <div id="lang-wrapper">
+      <div id="lang-selector">
+        <button class="lang-btn" data-lang="en" data-testid="lang-en-button">ENGLISH</button>
+        <button class="lang-btn active" data-lang="es" data-testid="lang-es-button">ESPAÑOL</button>
+      </div>
+    </div>
+    <div class="lives-preview">
+      <div class="heart"></div><div class="heart"></div><div class="heart"></div>
+    </div>
+    <button class="pixel-btn" id="btn-play" data-testid="play-button" data-i18n="play">PLAY</button>
+    <div class="hint" data-i18n="startHint">
+      Quick! Beat each 5-game challenge to learn how to stay safe online.<br>
+      Use your mouse to click and drag. Good luck, cyber-hero!
+    </div>
+  </div>
+
+  <!-- Categories Screen -->
+  <div id="screen-categories" class="screen" data-testid="screen-categories">
+    <button class="pixel-btn red" id="btn-cat-home" data-i18n="backToHome" style="position: absolute; bottom: 30px; right: 30px; font-size: 14px; padding: 10px 20px;">REGRESAR AL INICIO</button>
+    <h1 style="font-size: 36px; margin-bottom: 40px; text-shadow: 3px 3px 0 var(--title-2); color: var(--neon-cyan);" data-i18n="chooseCategory">CHOOSE CATEGORY</h1>
+    
+    <div style="display: flex; flex-direction: column; gap: 40px; align-items: center; max-width: 950px; margin-bottom: 20px; margin-top: 20px; padding-left: 70px;">
+      <button class="pixel-btn" id="btn-cat-citizenship" style="min-width: 400px; background: #6366f1; border-color: #4338ca; box-shadow: 6px 6px 0 #3730a3; min-height: 100px; font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <div style="width: 130px; height: 130px; border-radius: 50%; background: #fff; border: 6px solid #fff; box-shadow: 4px 4px 0 #3730a3; position: absolute; left: -65px; top: 50%; transform: translateY(-50%); overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2;">
+          <img src="cat-citizenship.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.35);" alt="Citizenship">
+        </div>
+        <span style="position: relative; z-index: 4; margin-left: 65px;" data-i18n="catCitizenship">DIGITAL CITIZENSHIP</span>
+      </button>
+      
+      <button class="pixel-btn" id="btn-cat-dangers" style="min-width: 400px; background: #ef4444; border-color: #dc2626; box-shadow: 6px 6px 0 #b91c1c; min-height: 100px; font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <div style="width: 130px; height: 130px; border-radius: 50%; background: #fff; border: 6px solid #fff; box-shadow: 4px 4px 0 #b91c1c; position: absolute; left: -65px; top: 50%; transform: translateY(-50%); overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2;">
+          <img src="cat-dangers.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.35);" alt="Network Dangers">
+        </div>
+        <span style="position: relative; z-index: 4; margin-left: 65px;" data-i18n="catDangers">NETWORK DANGERS</span>
+      </button>
+
+      <button class="pixel-btn" id="btn-cat-privacy" style="min-width: 400px; background: #10b981; border-color: #059669; box-shadow: 6px 6px 0 #047857; min-height: 100px; font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <div style="width: 130px; height: 130px; border-radius: 50%; background: #fff; border: 6px solid #fff; box-shadow: 4px 4px 0 #047857; position: absolute; left: -65px; top: 50%; transform: translateY(-50%); overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2;">
+          <img src="cat-privacy.png" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.35);" alt="Privacy & Security">
+        </div>
+        <span style="position: relative; z-index: 4; margin-left: 65px;" data-i18n="catPrivacy">PRIVACY & SECURITY</span>
+      </button>
+    </div>
+    
+    <!-- Placeholder for user image -->
+    <img id="category-mascot" src="" style="width: 250px; height: auto; min-height: 200px; object-fit: contain; display: none;" alt="Category Mascot">
+  </div>
+
+  <!-- Intro Screen (mini-game prompt) -->
+  <div id="screen-intro" class="screen" data-testid="screen-intro">
+    <div class="intro-top">
+      <div class="prompt" id="intro-prompt" data-testid="intro-prompt">SORT THE MAIL!</div>
+      <div class="topic" id="intro-topic">DIGITAL RISKS</div>
+      <div class="description" id="intro-description" data-testid="intro-description"></div>
+    </div>
+    <div class="intro-bottom">
+      <div class="demo" id="intro-tutorial" data-testid="intro-tutorial"></div>
+    </div>
+  </div>
+
+  <!-- Mini-Game Stage -->
+  <div id="screen-game" class="screen" data-testid="screen-game">
+    <div id="game-area" data-testid="game-area"></div>
+  </div>
+
+  <!-- Feedback Screen -->
+  <div id="screen-feedback" class="screen" data-testid="screen-feedback">
+    <div class="result win" id="feedback-result" data-testid="feedback-result">YOU WIN!</div>
+    <div class="tip-card" style="display: flex; align-items: center; gap: 24px;">
+      <img id="feedback-image" src="" style="width: 250px; height: auto; flex-shrink: 0; display: none;" />
+      <div>
+        <h3 data-i18n="cyberTip">CYBER TIP</h3>
+        <p id="feedback-tip" data-testid="feedback-tip">A strong password is like a secret shield!</p>
+      </div>
+    </div>
+    <button class="pixel-btn green" id="btn-next" data-testid="next-button" data-i18n="next" style="margin-top:22px;">NEXT</button>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="screen-gameover" class="screen" data-testid="screen-gameover">
+    <h2 data-i18n="gameOver">GAME OVER</h2>
+    <div class="gameover-sub" data-i18n="gameOverSub">YOUR CYBER MISSION IS DONE</div>
+    <div class="rounds-summary" id="gameover-summary" data-testid="gameover-summary">You survived 0 rounds!</div>
+    <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
+      <button class="pixel-btn green" id="btn-restart" data-testid="restart-button" data-i18n="playAgain">PLAY AGAIN</button>
+      <button class="pixel-btn blue" id="btn-gameover-menu" data-i18n="backToMenu" style="font-size: 16px;">VOLVER AL MENÚ</button>
+    </div>
+  </div>
+
+  <!-- Review Results Screen -->
+  <div id="screen-review" class="screen" data-testid="screen-review">
+    <h2 data-i18n="reviewResults">REVIEW RESULTS</h2>
+    <div class="review-list" id="review-list"></div>
+    <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 20px;">
+      <button class="pixel-btn green" id="btn-review-restart" data-testid="review-restart-button" data-i18n="playAgain">PLAY AGAIN</button>
+      <button class="pixel-btn blue" id="btn-review-menu" data-i18n="backToMenu" style="font-size: 16px;">VOLVER AL MENÚ</button>
+    </div>
+    
+    <div class="tip-box" id="review-tip-box">
+      <button class="tip-close-btn" id="btn-close-tip">X</button>
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <img id="review-tip-sprite" src="" style="width: 400px; height: auto; flex-shrink: 0; margin-left: -40px;" />
+        <div id="review-tip-text"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   HACKERWARE - GAME ENGINE
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   1. SOUND SYNTHESIZER (Web Audio API)
+   All sounds generated procedurally - no external files.
+   --------------------------------------------------------- */
+const SoundSynth = (() => {
+  let ctx = null;
+  let masterGain = null;
+
+  function init() {
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.35;
+    masterGain.connect(ctx.destination);
+  }
+
+  // Helper: play a single tone with envelope
+  function tone({freq=440, type='square', dur=0.12, vol=0.5, start=0, slideTo=null, attack=0.005, release=0.05}) {
+    if (!ctx) init();
+    const t0 = ctx.currentTime + start;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo !== null) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t0 + dur);
+    }
+    // ADSR-ish
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(masterGain);
+    osc.start(t0);
+    osc.stop(t0 + dur + release);
+  }
+
+  // Helper: noise burst (for snip, fizzle)
+  function noiseBurst({dur=0.08, vol=0.4, start=0, filterFreq=2000, type='lowpass'}) {
+    if (!ctx) init();
+    const t0 = ctx.currentTime + start;
+    const bufferSize = ctx.sampleRate * dur;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.value = filterFreq;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    noise.connect(filter).connect(gain).connect(masterGain);
+    noise.start(t0);
+    noise.stop(t0 + dur);
+  }
+
+  // ===== Public Sound Functions =====
+
+  // 1. Cheerful ascending retro chime
+  function playWinSound() {
+    init();
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+    notes.forEach((f, i) => tone({freq: f, type: 'square', dur: 0.12, vol: 0.35, start: i * 0.08}));
+    tone({freq: 1318.51, type: 'square', dur: 0.25, vol: 0.4, start: notes.length * 0.08});
+  }
+
+  // 2. Descending low-frequency buzz / fizzle on fail
+  function playLoseSound() {
+    init();
+    tone({freq: 220, type: 'sawtooth', dur: 0.5, vol: 0.4, slideTo: 55});
+    noiseBurst({dur: 0.3, vol: 0.2, filterFreq: 400, type: 'lowpass'});
+  }
+
+  // 3. Crisp high-pitched blip every second
+  function playTickSound() {
+    init();
+    tone({freq: 1500, type: 'square', dur: 0.04, vol: 0.25});
+  }
+
+  // 4. Subtle clean tactile click for UI
+  function playClickSound() {
+    init();
+    tone({freq: 880, type: 'square', dur: 0.04, vol: 0.2});
+    tone({freq: 1320, type: 'square', dur: 0.04, vol: 0.15, start: 0.02});
+  }
+
+  // 5. Dramatic, slowed-down 8-bit melody on game over
+  function playGameOverSound() {
+    init();
+    // Sad descending melody
+    const notes = [
+      {f: 659.25, d: 0.25}, // E5
+      {f: 587.33, d: 0.25}, // D5
+      {f: 523.25, d: 0.25}, // C5
+      {f: 440.00, d: 0.35}, // A4
+      {f: 392.00, d: 0.50}, // G4
+      {f: 329.63, d: 0.80}  // E4
+    ];
+    let t = 0;
+    notes.forEach(n => {
+      tone({freq: n.f, type: 'square', dur: n.d, vol: 0.35, start: t});
+      tone({freq: n.f / 2, type: 'triangle', dur: n.d, vol: 0.2, start: t});
+      t += n.d * 0.9;
+    });
+  }
+
+  // Bonus utility sounds for mini-game specific events
+  function playSnap() {
+    init();
+    tone({freq: 800, type: 'square', dur: 0.05, vol: 0.25});
+    tone({freq: 1200, type: 'square', dur: 0.06, vol: 0.25, start: 0.04});
+  }
+  function playDeflect() {
+    init();
+    tone({freq: 600, type: 'square', dur: 0.06, vol: 0.3, slideTo: 1400});
+    noiseBurst({dur: 0.05, vol: 0.15, filterFreq: 3000, type: 'highpass'});
+  }
+  function playSnip() {
+    init();
+    noiseBurst({dur: 0.06, vol: 0.4, filterFreq: 6000, type: 'highpass'});
+    tone({freq: 2000, type: 'square', dur: 0.04, vol: 0.2, start: 0.02});
+  }
+  function playCrumple() {
+    init();
+    noiseBurst({dur: 0.25, vol: 0.35, filterFreq: 1200, type: 'bandpass'});
+    tone({freq: 300, type: 'sawtooth', dur: 0.2, vol: 0.2, slideTo: 80});
+  }
+
+  // Resume context (browsers require user gesture)
+  function resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); }
+
+  return {
+    init, resume,
+    playWinSound, playLoseSound, playTickSound, playClickSound, playGameOverSound,
+    playSnap, playDeflect, playSnip, playCrumple
+  };
+})();
+
+/* ---------------------------------------------------------
+   2. GLOBAL GAME STATE
+   --------------------------------------------------------- */
+const Game = {
+  lang: 'es', // 'en' | 'es' - selected on start screen
+  lives: 3,
+  roundsWon: 0,
+  currentTimerSec: 15,
+  timerInterval: null,
+  remaining: 0,
+  miniGameQueue: [],
+  activeMiniGame: null,
+  acceptInput: false,
+  introTimeout: null,
+  currentCategory: null,
+  history: [],
+};
+
+/* ---------------------------------------------------------
+   2b. I18N - bilingual dictionary for all static UI text.
+   Per-mini-game prompts/tips live on the MiniGame objects as
+   { en: '...', es: '...' } and are resolved via t().
+   --------------------------------------------------------- */
+const I18N = {
+  en: {
+    subtitle:    'CYBER SAFETY MICRO-GAMES',
+    chooseLang:  'CHOOSE LANGUAGE / ELIGE IDIOMA',
+    play:        'PLAY',
+    startHint:   'Quick! Beat each 5-game challenge to learn how to stay safe online.<br>Use your mouse to click and drag. Good luck, cyber-hero!',
+    time:        'TIME',
+    round:       'ROUND',
+    cyberTip:    'CYBER TIP',
+    next:        'NEXT',
+    youWin:      'YOU WIN!',
+    ohNo:        'OH NO!',
+    gameOver:    'GAME OVER',
+    gameOverSub: 'YOUR CYBER MISSION IS DONE',
+    survived:    (n) => `You survived ${n} round${n === 1 ? '' : 's'}!`,
+    playAgain:   'PLAY AGAIN',
+    reviewResults: 'REVIEW RESULTS',
+    clickGameTip: 'CLICK A GAME TO VIEW TIP',
+    homeBtn:      'HOME',
+    chooseCategory: 'CHOOSE CATEGORY',
+    catCitizenship: 'DIGITAL CITIZENSHIP',
+    catDangers:     'NETWORK DANGERS',
+    catPrivacy:     'PRIVACY & SECURITY',
+    backToMenu:     'BACK TO MENU',
+    backToHome:     'BACK TO START',
+  },
+  es: {
+    subtitle:    'MICRO-JUEGOS DE CIBER-SEGURIDAD',
+    chooseLang:  'CHOOSE LANGUAGE / ELIGE IDIOMA',
+    play:        'JUGAR',
+    startHint:   '¡Rápido! Supera los 5 mini-juegos para aprender a estar a salvo en línea.<br>Usa el ratón para hacer clic y arrastrar. ¡Suerte, ciber-héroe!',
+    time:        'TIEMPO',
+    round:       'RONDA',
+    cyberTip:    'CIBER-CONSEJO',
+    next:        'SIGUIENTE',
+    youWin:      '¡GANASTE!',
+    ohNo:        '¡OH NO!',
+    gameOver:    'FIN DEL JUEGO',
+    gameOverSub: 'TU MISIÓN CIBER HA TERMINADO',
+    survived:    (n) => `¡Sobreviviste ${n} ronda${n === 1 ? '' : 's'}!`,
+    playAgain:   'JUGAR DE NUEVO',
+    reviewResults: 'RESULTADOS',
+    clickGameTip: 'HAZ CLIC PARA VER EL CONSEJO',
+    homeBtn:      'INICIO',
+    chooseCategory: 'ELIGE UNA CATEGORÍA',
+    catCitizenship: 'CIUDADANÍA DIGITAL',
+    catDangers: 'PELIGROS EN LA RED',
+    catPrivacy: 'PROTECCIÓN Y PRIVACIDAD',
+    backToMenu: 'VOLVER AL MENÚ',
+    backToHome: 'REGRESAR AL INICIO',
+  }
+};
+
+// Helper: resolve a value that may be {en, es} OR a plain string OR a function(n)
+function t(valOrKey, ...args) {
+  if (valOrKey == null) return '';
+  if (typeof valOrKey === 'string') {
+    // treat as I18N key
+    const entry = I18N[Game.lang][valOrKey];
+    if (typeof entry === 'function') return entry(...args);
+    return entry != null ? entry : valOrKey;
+  }
+  if (typeof valOrKey === 'object') {
+    return valOrKey[Game.lang] != null ? valOrKey[Game.lang] : (valOrKey.en || '');
+  }
+  return String(valOrKey);
+}
+
+// Walk all data-i18n elements and refresh their text from the dictionary.
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = I18N[Game.lang][key];
+    if (val != null) {
+      // hint may contain <br>, use innerHTML for that key
+      if (key === 'startHint') el.innerHTML = val;
+      else el.textContent = val;
+    }
+  });
+  // Update active lang button styling
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === Game.lang);
+  });
+}
+
+/* ---------------------------------------------------------
+   3. SCREEN MANAGER
+   --------------------------------------------------------- */
+const Screens = {
+  show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+  hud(visible) {
+    const hud = document.getElementById('hud');
+    if (visible) hud.classList.remove('hidden');
+    else hud.classList.add('hidden');
+  }
+};
+
+/* ---------------------------------------------------------
+   4. LIVES UI
+   --------------------------------------------------------- */
+function renderLives() {
+  const el = document.getElementById('lives');
+  el.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart' + (i >= Game.lives ? ' lost' : '');
+    h.dataset.testid = `heart-${i}`;
+    el.appendChild(h);
+  }
+}
+
+/* ---------------------------------------------------------
+   5. TIMER
+   --------------------------------------------------------- */
+const Timer = {
+  start(seconds, onExpire) {
+    Timer.stop();
+    Game.remaining = seconds;
+    Timer.updateBar(seconds, seconds);
+    let lastWhole = Math.ceil(seconds);
+    const startTime = performance.now();
+    Game.timerInterval = setInterval(() => {
+      const elapsed = (performance.now() - startTime) / 1000;
+      Game.remaining = Math.max(0, seconds - elapsed);
+      Timer.updateBar(Game.remaining, seconds);
+      const wholeNow = Math.ceil(Game.remaining);
+      if (wholeNow < lastWhole && wholeNow > 0) {
+        SoundSynth.playTickSound();
+        lastWhole = wholeNow;
+      }
+      if (Game.remaining <= 0) {
+        Timer.stop();
+        onExpire && onExpire();
+      }
+    }, 50);
+  },
+  stop() {
+    if (Game.timerInterval) {
+      clearInterval(Game.timerInterval);
+      Game.timerInterval = null;
+    }
+  },
+  updateBar(remaining, total) {
+    const pct = Math.max(0, Math.min(100, (remaining / total) * 100));
+    document.getElementById('timer-bar').style.width = pct + '%';
+  }
+};
+
+/* ---------------------------------------------------------
+   6. UTILITIES
+   --------------------------------------------------------- */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Make an element draggable by mouse, with onSnap/onRelease callbacks.
+function makeDraggable(el, opts={}) {
+  let dragging = false;
+  let offsetX = 0, offsetY = 0;
+  const onDown = (e) => {
+    if (!Game.acceptInput) return;
+    if (opts.disabled && opts.disabled()) return;
+    dragging = true;
+    el.classList.add('dragging');
+    const rect = el.getBoundingClientRect();
+    const point = getPoint(e);
+    offsetX = point.x - rect.left;
+    offsetY = point.y - rect.top;
+    SoundSynth.playClickSound();
+    e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    const point = getPoint(e);
+    const parent = el.parentElement.getBoundingClientRect();
+    const scale = parent.width / 960; // approximate
+    el.style.left = ((point.x - offsetX - parent.left) / scale) + 'px';
+    el.style.top  = ((point.y - offsetY - parent.top)  / scale) + 'px';
+    opts.onDrag && opts.onDrag(el);
+  };
+  const onUp = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+    opts.onRelease && opts.onRelease(el);
+  };
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('touchstart', onDown, {passive: false});
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive: false});
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+}
+function getPoint(e) {
+  if (e.touches && e.touches[0]) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  if (e.changedTouches && e.changedTouches[0]) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
+  return {x: e.clientX, y: e.clientY};
+}
+
+// Returns the bounding box of an element in the GAME-AREA's local (unscaled) coords.
+function localRect(el) {
+  const ar = document.getElementById('game-area').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const scale = ar.width / 960;
+  return {
+    left: (r.left - ar.left) / scale,
+    top:  (r.top  - ar.top)  / scale,
+    right: (r.right - ar.left) / scale,
+    bottom: (r.bottom - ar.top) / scale,
+    width: r.width / scale,
+    height: r.height / scale,
+    cx: (r.left + r.width/2 - ar.left) / scale,
+    cy: (r.top + r.height/2 - ar.top) / scale,
+  };
+}
+function overlaps(a, b) {
+  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+}
+function distance(ax, ay, bx, by) {
+  return Math.hypot(ax - bx, ay - by);
+}
+
+// Spawn particle burst at coords (game-area local)
+function spawnBurst(x, y, color) {
+  const ga = document.getElementById('game-area');
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement('div');
+    p.className = 'fx-particle';
+    p.style.background = color;
+    p.style.left = (x - 4) + 'px';
+    p.style.top  = (y - 4) + 'px';
+    const angle = (i / 8) * Math.PI * 2;
+    const dist = 40 + Math.random() * 20;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    p.animate(
+      [
+        {transform: 'translate(0,0) scale(1)', opacity: 1},
+        {transform: `translate(${dx}px,${dy}px) scale(0)`, opacity: 0}
+      ],
+      {duration: 500, easing: 'ease-out'}
+    );
+    ga.appendChild(p);
+    setTimeout(() => p.remove(), 500);
+  }
+}
+
+/* ---------------------------------------------------------
+   6b. TUTORIAL DEMO TEMPLATES
+   Returns inline HTML for the looping pixel-art demo shown
+   on the intro screen for each mini-game.
+   --------------------------------------------------------- */
+// Pixel mouse cursor SVG (used in most demos)
+const CURSOR_SVG = `
+  <svg viewBox="0 0 16 16" preserveAspectRatio="xMidYMid meet">
+    <polygon points="2,1 2,12 5,9 7,14 9,13 7,8 11,8"
+      fill="#ffffff" stroke="#0d0221" stroke-width="1.5" stroke-linejoin="miter"/>
+  </svg>`;
+// Pixel scissors SVG (used in phishing demo)
+const SCISSORS_SVG = `
+  <svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet">
+    <circle cx="9"  cy="22" r="5" fill="none" stroke="#ff2975" stroke-width="3"/>
+    <circle cx="23" cy="22" r="5" fill="none" stroke="#ff2975" stroke-width="3"/>
+    <line x1="13" y1="18" x2="28" y2="3" stroke="#0066ff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="19" y1="18" x2="4"  y2="3" stroke="#0066ff" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
+
+function buildDemoHTML(name, lang) {
+  switch (name) {
+    case 'password-puzzle':
+      return `
+        <div class="demo demo-password">
+          <div class="d-slot"></div>
+          <div class="d-piece">A</div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'meme-shield':
+      return `
+        <div class="demo demo-meme">
+          <div class="d-bubble">${lang === 'es' ? '¡FEO!' : 'UGLY!'}</div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'fake-news':
+      return `
+        <div class="demo demo-fakenews">
+          <div class="d-alert">⚠ ${lang === 'es' ? 'FALSO' : 'FAKE'}</div>
+          <div class="d-bin">🗑</div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'inbox-cleaner':
+      return `
+        <div class="demo demo-inbox">
+          <div class="d-email">${lang === 'es' ? '¡GRATIS!' : 'FREE!'}</div>
+          <div class="d-trash">🗑</div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'phishing-hook':
+      return `
+        <div class="demo demo-phish">
+          <div class="d-line"></div>
+          <div class="d-bait">${lang === 'es' ? 'PREMIO' : 'PRIZE'}</div>
+          <div class="demo-scissors-cursor">${SCISSORS_SVG}</div>
+        </div>`;
+    case 'app-permissions':
+      return `
+        <div class="demo demo-perm">
+          <div class="d-window">
+            <div class="d-titlebar">${lang === 'es' ? '⚠ PERMISO' : '⚠ PERMISSION'}</div>
+            <div class="d-body">
+              <div class="d-app">🔦</div>
+              <div>${lang === 'es' ? 'Linterna quiere:' : 'Flashlight wants:'}</div>
+              <div class="d-perm-tag">${lang === 'es' ? 'CONTACTOS' : 'CONTACTS'}</div>
+              <div class="d-btn-row">
+                <div class="d-btn allow">${lang === 'es' ? 'PERMITIR' : 'ALLOW'}</div>
+                <div class="d-btn deny">${lang === 'es' ? 'DENEGAR' : 'DENY'}</div>
+              </div>
+            </div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'think-before-post':
+      return `
+        <div class="demo demo-post">
+          <div class="d-card">
+            <div class="d-card-header">@${lang === 'es' ? 'yo' : 'me'} · ${lang === 'es' ? 'POST' : 'POST'}</div>
+            <div class="d-card-body">${lang === 'es' ? '"Estoy solo en casa..."' : '"Home alone all weekend..."'}</div>
+            <div class="d-card-btns">
+              <div class="d-card-btn post">${lang === 'es' ? 'POSTEAR' : 'POST'}</div>
+              <div class="d-card-btn think">${lang === 'es' ? 'PENSAR' : 'THINK'}</div>
+            </div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'url-detective':
+      return `
+        <div class="demo demo-url">
+          <div class="d-grid">
+            <div class="d-url">y0utube.com</div>
+            <div class="d-url real">youtube.com</div>
+            <div class="d-url">youtub3.com</div>
+            <div class="d-url">youtube.co</div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'download-warning':
+      return `
+        <div class="demo demo-dl">
+          <div class="d-window">
+            <div class="d-titlebar">⬇ ${lang === 'es' ? 'DESCARGA' : 'DOWNLOAD'}</div>
+            <div class="d-body">
+              <div style="font-size:24px">💎</div>
+              <div class="d-filename">free.exe</div>
+              <div class="d-btn-row">
+                <div class="d-btn continue">${lang === 'es' ? 'CONTINUAR' : 'CONTINUE'}</div>
+                <div class="d-btn cancel">${lang === 'es' ? 'CANCELAR' : 'CANCEL'}</div>
+              </div>
+            </div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'screen-lock':
+      return `
+        <div class="demo demo-lock">
+          <div class="d-phone"><div class="d-phone-screen"></div></div>
+          <div class="d-pad">🔒</div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'tfa-quiz':
+      return `
+        <div class="demo demo-tfa">
+          <div class="d-notif">
+            <div class="d-notif-label">${lang === 'es' ? 'CÓDIGO' : 'CODE'}</div>
+            <div class="d-notif-code">7392</div>
+          </div>
+          <div class="d-slots">
+            <div class="d-slot">7</div><div class="d-slot">3</div>
+            <div class="d-slot">9</div><div class="d-slot">2</div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'cookies-banner':
+      return `
+        <div class="demo demo-cookie">
+          <div class="d-banner">
+            <div class="d-cookie-icon">🍪</div>
+            <div class="d-cookie-text">${lang === 'es' ? '¿Aceptar cookies?' : 'Accept cookies?'}</div>
+            <div class="d-c-btn accept">${lang === 'es' ? 'TODO' : 'ALL'}</div>
+            <div class="d-c-btn nec">${lang === 'es' ? 'SOLO NEC.' : 'ONLY NEC.'}</div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'help-a-friend':
+      return `
+        <div class="demo demo-help">
+          <div class="d-avatar">😢</div>
+          <div class="d-bubble">"${lang === 'es' ? 'Necesito ayuda...' : 'I need help...'}"</div>
+          <div class="d-cards">
+            <div class="d-card good">${lang === 'es' ? 'Avisa a un adulto' : 'Tell an adult'}</div>
+            <div class="d-card">${lang === 'es' ? 'Insulta de vuelta' : 'Insult back'}</div>
+            <div class="d-card">${lang === 'es' ? 'Comparte chismes' : 'Share gossip'}</div>
+            <div class="d-card">${lang === 'es' ? 'Ignóralo' : 'Ignore it'}</div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    case 'empathy-express':
+      return `
+        <div class="demo demo-emp">
+          <div class="d-post">
+            <div class="d-post-h">@${lang === 'es' ? 'amigo' : 'friend'}</div>
+            <div class="d-post-b">"${lang === 'es' ? 'Estoy muy triste 😢' : 'Feeling so sad 😢'}"</div>
+          </div>
+          <div class="d-stickers">
+            <div class="d-sticker">🤣</div>
+            <div class="d-sticker right">❤️</div>
+            <div class="d-sticker">😡</div>
+          </div>
+        </div>`;
+    case 'phone-scam':
+      return `
+        <div class="demo demo-scam">
+          <div class="d-phone">
+            <div class="d-phone-screen">
+              <div class="d-phone-icon">🏦</div>
+              ${lang === 'es' ? 'BANCO!!' : 'BANK!!'}
+            </div>
+          </div>
+          <div class="d-btn-row">
+            <div class="d-btn give">${lang === 'es' ? 'DAR' : 'GIVE'}</div>
+            <div class="d-btn hang">${lang === 'es' ? 'COLGAR' : 'HANG UP'}</div>
+          </div>
+          <div class="demo-cursor">${CURSOR_SVG}</div>
+        </div>`;
+    default:
+      return '';
+  }
+}
+
+/* ---------------------------------------------------------
+   7. MINI-GAMES REGISTRY
+   Each mini-game implements: { name, topic, prompt, tipWin, tipLose, mount(area), cleanup() }
+   --------------------------------------------------------- */
+const MiniGames = [];
+
+/* ===== Mini-Game 1: Password Puzzle ===== */
+MiniGames.push({
+  name: 'password-puzzle',
+  topic:   { en: 'SECURITY & PRIVACY', es: 'SEGURIDAD Y PRIVACIDAD' },
+  prompt:  { en: 'BUILD A STRONG PASSWORD!', es: '¡CREA UNA CONTRASEÑA FUERTE!' },
+  tipWin:  {
+    en: 'A strong password is like a secret shield! Combine capital letters, numbers, and symbols to keep your accounts safe.',
+    es: '¡Una contraseña fuerte es como un escudo secreto! Combina mayúsculas, números y símbolos para proteger tus cuentas.'
+  },
+  tipLose: {
+    en: 'A strong password is like a secret shield! Combine capital letters, numbers, and symbols to keep your accounts safe.',
+    es: '¡Una contraseña fuerte es como un escudo secreto! Combina mayúsculas, números y símbolos para proteger tus cuentas.'
+  },
+  desc:    {
+    en: 'Drag each puzzle piece into a slot to build a strong password!',
+    es: '¡Arrastra cada pieza del rompecabezas a una casilla para crear una contraseña fuerte!'
+  },
+  instr:   { en: 'DRAG THE PIECES INTO THE SLOTS', es: 'ARRASTRA LAS PIEZAS A LAS CASILLAS' },
+  mount(area, onWin, onLose) {
+    // Title
+    const title = document.createElement('div');
+    title.className = 'pw-title';
+    title.textContent = t(this.instr);
+    area.appendChild(title);
+
+    // Pieces definition
+    const piecesData = [
+      {label: 'A', color: '#39ff14', kind: 'CAPITAL'},
+      {label: '7', color: '#00f0ff', kind: 'NUMBER'},
+      {label: '@', color: '#ff2975', kind: 'SYMBOL'},
+      {label: 'k', color: '#ffbe0b', kind: 'lower'}
+    ];
+
+    // Slot row
+    const slotRow = document.createElement('div');
+    slotRow.className = 'pw-slot-row';
+    area.appendChild(slotRow);
+    const slots = [];
+    for (let i = 0; i < piecesData.length; i++) {
+      const s = document.createElement('div');
+      s.className = 'pw-slot';
+      s.dataset.testid = `pw-slot-${i}`;
+      s.textContent = '?';
+      slotRow.appendChild(s);
+      slots.push(s);
+    }
+
+    // Pieces scattered in bottom area
+    const piecePositions = shuffle([
+      {x: 120, y: 320}, {x: 320, y: 380}, {x: 540, y: 320}, {x: 740, y: 380}
+    ]);
+    const pieces = [];
+    piecesData.forEach((pd, i) => {
+      const p = document.createElement('div');
+      p.className = 'pw-piece draggable';
+      p.textContent = pd.label;
+      p.style.background = pd.color;
+      p.style.left = piecePositions[i].x + 'px';
+      p.style.top  = piecePositions[i].y + 'px';
+      p.dataset.kind = pd.kind;
+      p.dataset.testid = `pw-piece-${pd.kind.toLowerCase()}`;
+      area.appendChild(p);
+      pieces.push(p);
+      makeDraggable(p, {
+        disabled: () => p.classList.contains('placed'),
+        onRelease: (el) => {
+          // Find nearest empty slot
+          const elR = localRect(el);
+          let bestSlot = null, bestDist = Infinity;
+          slots.forEach(s => {
+            if (s.classList.contains('filled')) return;
+            const sR = localRect(s);
+            const d = distance(elR.cx, elR.cy, sR.cx, sR.cy);
+            if (d < bestDist) { bestDist = d; bestSlot = s; }
+          });
+          if (bestSlot && bestDist < 70) {
+            // Snap
+            const sR = localRect(bestSlot);
+            el.style.left = (sR.cx - 44) + 'px';
+            el.style.top  = (sR.cy - 44) + 'px';
+            el.classList.add('placed');
+            bestSlot.classList.add('filled');
+            bestSlot.textContent = '';
+            SoundSynth.playSnap();
+            spawnBurst(sR.cx, sR.cy, pd.color);
+            // Check win
+            if (slots.every(s => s.classList.contains('filled'))) {
+              setTimeout(() => onWin(), 250);
+            }
+          }
+        }
+      });
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: App Permissions (¡Cuidado con los Permisos!) =====
+   Shows a retro system-alert popup where a harmless app is asking
+   for a permission it has no business needing. Player must click
+   DENY to win. Clicking ALLOW = lose.
+*/
+MiniGames.push({
+  name: 'app-permissions',
+  topic:  { en: 'PRIVACY & SECURITY', es: 'PROTECCIÓN Y PRIVACIDAD' },
+  prompt: { en: 'ALLOW OR DENY?',     es: '¿PERMITIR O DENEGAR?' },
+  tipWin: {
+    en: 'Some apps ask for permissions they do not need. A flashlight does NOT need your contacts! Always read carefully and DENY suspicious permissions.',
+    es: 'Algunas apps piden permisos que no necesitan. ¡Una linterna NO necesita tus contactos! Lee con cuidado y siempre DENIEGA los permisos sospechosos.'
+  },
+  tipLose: {
+    en: 'Careful! By allowing that permission, the app could spy on your data. A flashlight does not need your contacts — always think before you tap ALLOW.',
+    es: '¡Cuidado! Al permitir ese acceso, la app podría espiar tus datos. Una linterna no necesita tus contactos — siempre piensa antes de tocar PERMITIR.'
+  },
+  desc: {
+    en: 'A popup asks for a strange permission. Is it really safe? Tap DENY if the app does NOT need it!',
+    es: 'Una ventana pide un permiso extraño. ¿Es realmente seguro? ¡Toca DENEGAR si la app NO lo necesita!'
+  },
+  instr: {
+    en: 'READ THE POPUP. IF THE APP DOES NOT NEED THAT PERMISSION → DENY!',
+    es: 'LEE LA VENTANA. SI LA APP NO NECESITA ESE PERMISO → ¡DENIEGA!'
+  },
+  // Pool of suspicious app/permission mismatches. All items are TRAPS:
+  // the player must always pick DENY. Variety teaches the pattern.
+  pool: [
+    { app: { en: 'FLASHLIGHT',     es: 'LINTERNA'      }, appIcon: '🔦',
+      perm:{ en: 'YOUR CONTACTS',  es: 'TUS CONTACTOS' }, permIcon: '👥' },
+    { app: { en: 'CALCULATOR',     es: 'CALCULADORA'   }, appIcon: '🧮',
+      perm:{ en: 'YOUR LOCATION',  es: 'TU UBICACIÓN'  }, permIcon: '📍' },
+    { app: { en: 'WALLPAPERS',     es: 'FONDOS DE PANTALLA' }, appIcon: '🖼️',
+      perm:{ en: 'SMS & CALLS',    es: 'SMS Y LLAMADAS' }, permIcon: '📞' },
+    { app: { en: 'ALARM CLOCK',    es: 'DESPERTADOR'   }, appIcon: '⏰',
+      perm:{ en: 'BROWSING HISTORY', es: 'HISTORIAL WEB' }, permIcon: '🌐' },
+    { app: { en: 'STICKER PACK',   es: 'PAQUETE DE STICKERS' }, appIcon: '🎨',
+      perm:{ en: 'CAMERA & MIC',   es: 'CÁMARA Y MICRÓFONO' }, permIcon: '🎥' },
+    { app: { en: 'SIMPLE GAME',    es: 'JUEGO SENCILLO' }, appIcon: '🎮',
+      perm:{ en: 'YOUR CONTACTS',  es: 'TUS CONTACTOS' }, permIcon: '👥' },
+    { app: { en: 'NOTES APP',      es: 'NOTAS'         }, appIcon: '📝',
+      perm:{ en: 'GPS LOCATION',   es: 'UBICACIÓN GPS' }, permIcon: '📍' },
+    { app: { en: 'FREE MUSIC',     es: 'MÚSICA GRATIS' }, appIcon: '🎵',
+      perm:{ en: 'PHONE CALLS',    es: 'TUS LLAMADAS'  }, permIcon: '📞' },
+  ],
+  labels: {
+    permissionRequest: { en: 'PERMISSION REQUEST', es: 'SOLICITUD DE PERMISO' },
+    wants:             { en: 'wants to access',    es: 'quiere acceder a'    },
+    allowQuestion:     { en: 'Do you allow it?',   es: '¿Lo permites?'       },
+    allowBtn:          { en: 'ALLOW',              es: 'PERMITIR'            },
+    denyBtn:           { en: 'DENY',               es: 'DENEGAR'             },
+  },
+  mount(area, onWin, onLose) {
+    area.classList.add('perm-mode');
+
+    // Instruction line above the popup
+    const instr = document.createElement('div');
+    instr.className = 'perm-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    // Pick a random trap from the pool
+    const item = pick(this.pool);
+    const L = this.labels;
+
+    // Build the popup window
+    const win = document.createElement('div');
+    win.className = 'perm-window';
+    win.dataset.testid = 'perm-window';
+    win.innerHTML = `
+      <div class="perm-titlebar">
+        <div class="perm-titlebar-left">
+          <span class="perm-warn-icon">!</span>
+          <span>${t(L.permissionRequest)}</span>
+        </div>
+        <div class="perm-titlebar-buttons">
+          <div class="perm-tb-btn">_</div>
+          <div class="perm-tb-btn">X</div>
+        </div>
+      </div>
+      <div class="perm-body">
+        <div class="perm-app-icon">${item.appIcon}</div>
+        <div class="perm-question">
+          <span class="perm-app-name" data-testid="perm-app-name">${t(item.app)}</span>
+          ${t(L.wants)}:
+        </div>
+        <div class="perm-permission-row">
+          <span class="perm-permission-icon">${item.permIcon}</span>
+          <span class="perm-permission-text" data-testid="perm-permission">${t(item.perm)}</span>
+        </div>
+        <div class="perm-question" style="margin-bottom:14px;">${t(L.allowQuestion)}</div>
+        <div class="perm-buttons">
+          <button class="perm-btn deny"  data-testid="perm-deny-btn">${t(L.denyBtn)}</button>
+          <button class="perm-btn allow" data-testid="perm-allow-btn">${t(L.allowBtn)}</button>
+        </div>
+      </div>`;
+    area.appendChild(win);
+
+    let resolved = false;
+    const denyBtn  = win.querySelector('[data-testid="perm-deny-btn"]');
+    const allowBtn = win.querySelector('[data-testid="perm-allow-btn"]');
+
+    denyBtn.addEventListener('click', () => {
+      if (resolved) return;
+      resolved = true;
+      SoundSynth.playSnap();
+      win.classList.add('correct');
+      const r = localRect(win);
+      spawnBurst(r.cx, r.cy, '#39ff14');
+      setTimeout(onWin, 600);
+    });
+
+    allowBtn.addEventListener('click', () => {
+      if (resolved) return;
+      resolved = true;
+      SoundSynth.playLoseSound();
+      win.classList.add('wrong');
+      setTimeout(onLose, 600);
+    });
+
+    this._area = area;
+  },
+  cleanup() {
+    if (this._area) this._area.classList.remove('perm-mode');
+  }
+});
+
+/* ===== Mini-Game: Think Before You Post (CITIZENSHIP) =====
+   Shows a post composer with a draft message. Some posts are safe
+   (no personal info), others leak personal data. Player picks
+   POSTEAR (post) for safe, PENSAR (think first) for unsafe.
+*/
+MiniGames.push({
+  name: 'think-before-post',
+  topic:  { en: 'DIGITAL FOOTPRINT', es: 'HUELLA DIGITAL' },
+  prompt: { en: 'POST IT OR THINK?',  es: '¿LO POSTEO O LO PIENSO?' },
+  tipWin: {
+    en: 'Once you post something online, it stays there forever. Never share your address, school, phone or photos that reveal where you live.',
+    es: 'Lo que publicas en internet se queda para siempre. Nunca compartas tu dirección, escuela, teléfono ni fotos que muestren dónde vives.'
+  },
+  tipLose: {
+    en: 'Careful! Posting personal info can be dangerous. Before you post, ask: would a stranger learn something private from this?',
+    es: '¡Cuidado! Publicar información personal puede ser peligroso. Antes de postear, pregunta: ¿un desconocido aprendería algo privado con esto?'
+  },
+  desc: {
+    en: 'Read the post. If it has private info (address, school, phone), tap THINK. If it is safe, tap POST!',
+    es: 'Lee el post. Si tiene info privada (dirección, escuela, teléfono), toca PENSAR. Si es seguro, ¡toca POSTEAR!'
+  },
+  instr: {
+    en: 'IF THE POST HAS PRIVATE INFO → THINK. IF IT IS SAFE → POST.',
+    es: 'SI EL POST TIENE INFO PRIVADA → PENSAR. SI ES SEGURO → POSTEAR.'
+  },
+  pool: [
+    // UNSAFE — personal info
+    { safe: false, text: { en: '🏠 Mom and Dad went away! I am alone at home all weekend, who wants to come over?',
+                            es: '🏠 ¡Mis papás se fueron! Estoy solo en casa todo el finde, ¿quién viene?' } },
+    { safe: false, text: { en: '🏫 New uniform from Lincoln Elementary School! Class 4B looks awesome',
+                            es: '🏫 ¡Uniforme nuevo de la Escuela Lincoln! El 4to B se ve genial' } },
+    { safe: false, text: { en: '📞 New phone! Save my number: 555-3421. Text me anytime!',
+                            es: '📞 ¡Celu nuevo! Guarden mi número: 555-3421. ¡Escríbanme!' } },
+    { safe: false, text: { en: '📍 Live from my house at 42 Maple Street! Come visit anytime',
+                            es: '📍 ¡En vivo desde mi casa en Calle Sol 42! Vengan cuando quieran' } },
+    { safe: false, text: { en: '🎂 Just turned 9! Here is my full name and birthday: 03/15/2017',
+                            es: '🎂 ¡Cumplí 9! Mi nombre completo y cumpleaños: 15/03/2017' } },
+    // SAFE — just a thought
+    { safe: true,  text: { en: '🎬 The new dinosaur movie was AMAZING! 5 stars from me 🦖',
+                            es: '🎬 ¡La nueva peli de dinosaurios estuvo INCREÍBLE! 5 estrellas 🦖' } },
+    { safe: true,  text: { en: '⚽ Great soccer game today! My team played awesome',
+                            es: '⚽ ¡Qué buen partido hoy! Mi equipo jugó genial' } },
+    { safe: true,  text: { en: '🌅 Today\'s sunset was the prettiest I have ever seen',
+                            es: '🌅 El atardecer de hoy fue el más bonito que he visto' } },
+    { safe: true,  text: { en: '🎉 Happy birthday to my best friend! Wishing you the best',
+                            es: '🎉 ¡Feliz cumple a mi mejor amigo! Te deseo lo mejor' } },
+    { safe: true,  text: { en: '📚 Just finished an awesome book about space adventures!',
+                            es: '📚 ¡Acabo de leer un libro genial sobre aventuras en el espacio!' } },
+  ],
+  labels: {
+    user:   { en: '@me_user', es: '@yo_usuario' },
+    postBtn:{ en: 'POST',     es: 'POSTEAR'    },
+    thinkBtn:{en: 'THINK',    es: 'PENSAR'    },
+  },
+  mount(area, onWin, onLose) {
+    const item = pick(this.pool);
+    const L = this.labels;
+
+    const instr = document.createElement('div');
+    instr.className = 'post-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const composer = document.createElement('div');
+    composer.className = 'post-composer';
+    composer.dataset.testid = 'post-composer';
+    composer.dataset.safe = item.safe ? '1' : '0';
+    composer.innerHTML = `
+      <div class="post-header">
+        <div class="post-avatar">🐱</div>
+        <div>${t(L.user)}</div>
+      </div>
+      <div class="post-body" data-testid="post-body">${t(item.text)}</div>
+      <div class="post-buttons">
+        <button class="post-btn think" data-testid="post-think-btn">${t(L.thinkBtn)}</button>
+        <button class="post-btn post"  data-testid="post-post-btn">${t(L.postBtn)}</button>
+      </div>`;
+    area.appendChild(composer);
+
+    let resolved = false;
+    const resolve = (correct) => {
+      if (resolved) return;
+      resolved = true;
+      if (correct) {
+        SoundSynth.playSnap();
+        composer.classList.add('correct');
+        const r = localRect(composer);
+        spawnBurst(r.cx, r.cy, '#39ff14');
+        setTimeout(onWin, 600);
+      } else {
+        SoundSynth.playLoseSound();
+        composer.classList.add('wrong');
+        setTimeout(onLose, 600);
+      }
+    };
+    composer.querySelector('[data-testid="post-post-btn"]')
+      .addEventListener('click', () => resolve(item.safe));
+    composer.querySelector('[data-testid="post-think-btn"]')
+      .addEventListener('click', () => resolve(!item.safe));
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: URL Detective (DANGERS) =====
+   Shows 4 URLs, one real + 3 typosquatted fakes. Player must
+   click the REAL one. Wrong click = lose immediately.
+*/
+MiniGames.push({
+  name: 'url-detective',
+  topic:  { en: 'PHISHING AWARENESS', es: 'CONCIENCIA DE PHISHING' },
+  prompt: { en: 'FIND THE REAL SITE!', es: '¡ENCUENTRA EL SITIO REAL!' },
+  tipWin: {
+    en: 'Scammers copy famous websites by changing one tiny letter. Always read the URL letter by letter before clicking!',
+    es: 'Los estafadores copian sitios famosos cambiando una letra. ¡Siempre lee la URL letra por letra antes de hacer clic!'
+  },
+  tipLose: {
+    en: 'That URL was fake! Look out for swapped letters (l→1, o→0), extra letters, or weird endings like .co.fake — those are tricks.',
+    es: '¡Esa URL era falsa! Cuidado con letras cambiadas (l→1, o→0), letras extra o terminaciones raras como .co.fake — son trampas.'
+  },
+  desc: {
+    en: 'Four URLs are shown. Three are FAKE copies with small typos. Click the REAL one!',
+    es: 'Se muestran 4 URLs. Tres son copias FALSAS con errores pequeños. ¡Haz clic en la REAL!'
+  },
+  instr: {
+    en: 'CLICK THE REAL SITE. WATCH FOR FAKE LETTERS!',
+    es: 'HAZ CLIC EN EL SITIO REAL. ¡CUIDADO CON LETRAS FALSAS!'
+  },
+  // Each set: real URL + 3 fakes (typosquatted)
+  pool: [
+    { name: 'YouTube',   real: 'youtube.com',  fakes: ['y0utube.com', 'youtub3.com', 'youtube.co.fake'] },
+    { name: 'Google',    real: 'google.com',   fakes: ['g00gle.com',  'googel.com',  'googlle.com']    },
+    { name: 'Amazon',    real: 'amazon.com',   fakes: ['amaz0n.com',  'arnazon.com', 'amazon.co.shop'] },
+    { name: 'Netflix',   real: 'netflix.com',  fakes: ['netfllix.com','netfl1x.com', 'netflix.movie']  },
+    { name: 'Wikipedia', real: 'wikipedia.org',fakes: ['wikipedla.org','wik1pedia.org','wikipedia.net']},
+    { name: 'Spotify',   real: 'spotify.com',  fakes: ['sp0tify.com', 'spotlfy.com', 'spotify.music']  },
+  ],
+  labels: {
+    findReal:    { en: 'FIND THE REAL:', es: 'ENCUENTRA EL REAL:' },
+    addressBar:  { en: 'address bar',    es: 'barra de direcciones' },
+  },
+  mount(area, onWin, onLose) {
+    const item = pick(this.pool);
+
+    const instr = document.createElement('div');
+    instr.className = 'url-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const target = document.createElement('div');
+    target.className = 'url-target-text';
+    target.dataset.testid = 'url-target';
+    target.textContent = `${t(this.labels.findReal)} ${item.name.toUpperCase()}`;
+    area.appendChild(target);
+
+    // Decorative browser bar to set the context
+    const bar = document.createElement('div');
+    bar.className = 'url-browser-bar';
+    bar.innerHTML = `<span class="lock-icon">🔒</span><span>https://___</span>`;
+    area.appendChild(bar);
+
+    // Shuffle real + fakes
+    const options = shuffle([
+      { url: item.real,    isReal: true  },
+      { url: item.fakes[0], isReal: false },
+      { url: item.fakes[1], isReal: false },
+      { url: item.fakes[2], isReal: false },
+    ]);
+
+    const grid = document.createElement('div');
+    grid.className = 'url-grid';
+    area.appendChild(grid);
+
+    let resolved = false;
+    options.forEach((opt, idx) => {
+      const card = document.createElement('div');
+      card.className = 'url-card';
+      card.dataset.testid = opt.isReal ? 'url-real' : `url-fake-${idx}`;
+      card.textContent = opt.url;
+      grid.appendChild(card);
+      card.addEventListener('click', () => {
+        if (resolved) return;
+        resolved = true;
+        if (opt.isReal) {
+          card.classList.add('correct');
+          SoundSynth.playSnap();
+          const r = localRect(card);
+          spawnBurst(r.cx, r.cy, '#39ff14');
+          setTimeout(onWin, 600);
+        } else {
+          card.classList.add('wrong');
+          SoundSynth.playLoseSound();
+          setTimeout(onLose, 600);
+        }
+      });
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: Download Warning (DANGERS) =====
+   Shows a suspicious download dialog with shady filename. Player
+   must always pick CANCEL. CONTINUE = lose.
+*/
+MiniGames.push({
+  name: 'download-warning',
+  topic:  { en: 'SAFE DOWNLOADS', es: 'DESCARGAS SEGURAS' },
+  prompt: { en: 'OPEN OR CANCEL?', es: '¿ABRIR O CANCELAR?' },
+  tipWin: {
+    en: 'Watch out for files with weird endings like .exe, .scr or "double" endings like cat.jpg.exe. Those usually carry viruses!',
+    es: 'Cuidado con archivos con terminaciones raras como .exe, .scr o "doble" extensión como gato.jpg.exe. ¡Suelen llevar virus!'
+  },
+  tipLose: {
+    en: 'You let a virus in! Free software with weird names or .exe endings can hide malware. When in doubt, CANCEL.',
+    es: '¡Dejaste pasar un virus! Software gratis con nombres raros o terminación .exe puede esconder malware. Si dudas, CANCELA.'
+  },
+  desc: {
+    en: 'A file is trying to download. If the name looks suspicious (double extension, "FREE", weird letters), tap CANCEL!',
+    es: 'Un archivo intenta descargarse. Si el nombre es sospechoso (doble extensión, "GRATIS", letras raras), ¡toca CANCELAR!'
+  },
+  instr: {
+    en: 'READ THE FILENAME. IF SUSPICIOUS → CANCEL!',
+    es: 'LEE EL NOMBRE DEL ARCHIVO. SI ES SOSPECHOSO → ¡CANCELA!'
+  },
+  // All items are TRAPS — always pick CANCEL to win.
+  pool: [
+    { name: 'free_robux_GENERATOR.exe',  icon: '💎', size: { en: '0.4 MB', es: '0.4 MB' } },
+    { name: 'family_photo.jpg.exe',      icon: '🖼️', size: { en: '12 MB', es: '12 MB' } },
+    { name: 'homework_HELP_FREE.scr',    icon: '📄', size: { en: '2 MB',  es: '2 MB'  } },
+    { name: 'mineсraft_setup.exe',       icon: '🎮', size: { en: '8 MB',  es: '8 MB'  } },
+    { name: 'song_HIT_2026.mp3.exe',     icon: '🎵', size: { en: '5 MB',  es: '5 MB'  } },
+    { name: 'cute_cat_video.mp4.exe',    icon: '🎬', size: { en: '20 MB', es: '20 MB' } },
+    { name: 'GIFT_WINNER_PRIZE.zip.exe', icon: '🎁', size: { en: '1 MB',  es: '1 MB'  } },
+  ],
+  labels: {
+    download:    { en: 'DOWNLOAD READY', es: 'DESCARGA LISTA' },
+    fileSize:    { en: 'Size:', es: 'Tamaño:' },
+    askContinue: { en: 'Continue with this download?', es: '¿Continuar con esta descarga?' },
+    continueBtn: { en: 'CONTINUE', es: 'CONTINUAR' },
+    cancelBtn:   { en: 'CANCEL',   es: 'CANCELAR'  },
+  },
+  mount(area, onWin, onLose) {
+    area.classList.add('perm-mode');
+    const item = pick(this.pool);
+    const L = this.labels;
+
+    const instr = document.createElement('div');
+    instr.className = 'perm-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const win = document.createElement('div');
+    win.className = 'perm-window';
+    win.dataset.testid = 'dl-window';
+    win.innerHTML = `
+      <div class="perm-titlebar" style="background: var(--neon-orange); color: var(--ink);">
+        <div class="perm-titlebar-left">
+          <span class="perm-warn-icon">⬇</span>
+          <span>${t(L.download)}</span>
+        </div>
+        <div class="perm-titlebar-buttons">
+          <div class="perm-tb-btn">_</div>
+          <div class="perm-tb-btn">X</div>
+        </div>
+      </div>
+      <div class="perm-body">
+        <div class="dl-file-icon">${item.icon}</div>
+        <div class="dl-filename" data-testid="dl-filename">${item.name}</div>
+        <div class="dl-size">${t(L.fileSize)} ${t(item.size)}</div>
+        <div class="perm-question" style="margin-bottom:14px;">${t(L.askContinue)}</div>
+        <div class="perm-buttons">
+          <button class="perm-btn dl-btn cancel"   data-testid="dl-cancel-btn">${t(L.cancelBtn)}</button>
+          <button class="perm-btn dl-btn continue" data-testid="dl-continue-btn">${t(L.continueBtn)}</button>
+        </div>
+      </div>`;
+    area.appendChild(win);
+
+    let resolved = false;
+    win.querySelector('[data-testid="dl-cancel-btn"]').addEventListener('click', () => {
+      if (resolved) return; resolved = true;
+      SoundSynth.playSnap();
+      win.classList.add('correct');
+      const r = localRect(win); spawnBurst(r.cx, r.cy, '#39ff14');
+      setTimeout(onWin, 600);
+    });
+    win.querySelector('[data-testid="dl-continue-btn"]').addEventListener('click', () => {
+      if (resolved) return; resolved = true;
+      SoundSynth.playLoseSound();
+      win.classList.add('wrong');
+      setTimeout(onLose, 600);
+    });
+
+    this._area = area;
+  },
+  cleanup() {
+    if (this._area) this._area.classList.remove('perm-mode');
+  }
+});
+
+/* ===== Mini-Game: Screen Lock (PRIVACY) =====
+   Drag the padlock onto the unlocked phone before the "spy"
+   walks across the screen and reads your messages.
+*/
+MiniGames.push({
+  name: 'screen-lock',
+  topic:  { en: 'DEVICE SECURITY', es: 'SEGURIDAD DEL DISPOSITIVO' },
+  prompt: { en: 'LOCK THE PHONE!',  es: '¡BLOQUEA EL CELULAR!' },
+  tipWin: {
+    en: 'Always lock your phone with a PIN or fingerprint. If you leave it unlocked, anyone can read your private chats and photos.',
+    es: 'Siempre bloquea tu celular con PIN o huella. Si lo dejas desbloqueado, cualquiera puede leer tus chats y fotos privados.'
+  },
+  tipLose: {
+    en: 'Oh no! A snoop saw your messages. Always lock your phone before leaving it on the table — even for a minute!',
+    es: '¡Oh no! Un curioso vio tus mensajes. Siempre bloquea tu celular antes de dejarlo en la mesa — ¡aunque sea un minuto!'
+  },
+  desc: {
+    en: 'Drag the padlock onto the phone before someone sees your private apps!',
+    es: '¡Arrastra el candado al celular antes de que alguien vea tus apps privadas!'
+  },
+  instr: {
+    en: 'DRAG THE PADLOCK ONTO THE PHONE BEFORE THE SNOOP GETS HERE!',
+    es: 'ARRASTRA EL CANDADO AL CELULAR ANTES DE QUE EL CURIOSO LLEGUE'
+  },
+  labels: {
+    dragHere: { en: 'DRAG ME →', es: 'ARRÁSTRAME →' },
+    locked:   { en: 'LOCKED!',   es: '¡BLOQUEADO!'  },
+  },
+  mount(area, onWin, onLose) {
+    const L = this.labels;
+
+    const instr = document.createElement('div');
+    instr.className = 'lock-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const phone = document.createElement('div');
+    phone.className = 'lock-phone';
+    phone.dataset.testid = 'lock-phone';
+    const apps = ['💬', '📷', '📧', '📝', '🎵', '🎮', '📱', '💳', '🗺️'];
+    phone.innerHTML = `
+      <div class="lock-phone-screen">
+        ${apps.map(a => `<div class="lock-app-tile">${a}</div>`).join('')}
+      </div>`;
+    area.appendChild(phone);
+
+    // Snooping spy that approaches; if it reaches the phone before lock = lose
+    const spy = document.createElement('div');
+    spy.className = 'lock-spy';
+    spy.textContent = '👀';
+    spy.dataset.testid = 'lock-spy';
+    area.appendChild(spy);
+
+    const hint = document.createElement('div');
+    hint.className = 'lock-target-hint';
+    hint.textContent = t(L.dragHere);
+    area.appendChild(hint);
+
+    const pad = document.createElement('div');
+    pad.className = 'lock-pad draggable';
+    pad.dataset.testid = 'lock-pad';
+    pad.textContent = '🔒';
+    area.appendChild(pad);
+
+    let resolved = false;
+    let locked = false;
+
+    // Lose condition: spy reaches phone before locked
+    this._spyTimer = setTimeout(() => {
+      if (locked || resolved) return;
+      resolved = true;
+      SoundSynth.playLoseSound();
+      setTimeout(onLose, 400);
+    }, 11500); // matches CSS spyApproach (12s) minus a bit
+
+    makeDraggable(pad, {
+      disabled: () => resolved,
+      onRelease: (el) => {
+        if (resolved) return;
+        const pR = localRect(phone);
+        const eR = localRect(el);
+        if (overlaps(eR, pR)) {
+          locked = true; resolved = true;
+          phone.classList.add('locked');
+          phone.querySelector('.lock-phone-screen').textContent = '🔒';
+          el.style.transition = 'opacity 0.3s, transform 0.3s';
+          el.style.opacity = '0';
+          el.style.transform = 'scale(0.5)';
+          spy.style.animationPlayState = 'paused';
+          SoundSynth.playSnap();
+          spawnBurst(pR.cx, pR.cy, '#39ff14');
+          setTimeout(onWin, 600);
+        }
+      }
+    });
+
+    this._area = area;
+  },
+  cleanup() {
+    if (this._spyTimer) clearTimeout(this._spyTimer);
+  }
+});
+
+/* ===== Mini-Game: 2FA Quiz (PRIVACY) =====
+   A code is sent to your "phone". Type it into the login form
+   using the keypad before time runs out. Wrong digit = lose.
+*/
+MiniGames.push({
+  name: 'tfa-quiz',
+  topic:  { en: '2-STEP VERIFICATION', es: 'VERIFICACIÓN EN 2 PASOS' },
+  prompt: { en: 'TYPE THE CODE!', es: '¡TECLEA EL CÓDIGO!' },
+  tipWin: {
+    en: '2-step verification adds a second key to your account. Even if a hacker guesses your password, they cannot get in without the code.',
+    es: 'La verificación en 2 pasos añade una segunda llave a tu cuenta. Aunque un hacker adivine tu contraseña, no entra sin el código.'
+  },
+  tipLose: {
+    en: 'The code matters! Always type it exactly as you receive it, and NEVER share your 2FA code with anyone — not even friends.',
+    es: '¡El código importa! Tecléalo exactamente como llega y NUNCA lo compartas con nadie — ni siquiera con amigos.'
+  },
+  desc: {
+    en: 'A 4-digit code is sent to your phone. Type it in the login screen using the keypad!',
+    es: 'Te llega un código de 4 dígitos al celular. ¡Tecléalo en la pantalla de login con el teclado!'
+  },
+  instr: {
+    en: 'TYPE THE 4-DIGIT CODE EXACTLY AS SHOWN!',
+    es: '¡TECLEA EL CÓDIGO DE 4 DÍGITOS EXACTAMENTE COMO APARECE!'
+  },
+  labels: {
+    notifTitle:  { en: '📩 NEW MESSAGE',         es: '📩 MENSAJE NUEVO'         },
+    notifText:   { en: 'Your verification code:', es: 'Tu código de verificación:' },
+    loginTitle:  { en: '🔐 ENTER 2FA CODE',      es: '🔐 INGRESA CÓDIGO 2FA'    },
+  },
+  mount(area, onWin, onLose) {
+    const L = this.labels;
+
+    const instr = document.createElement('div');
+    instr.className = 'tfa-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    // Generate a random 4-digit code
+    const code = String(randInt(1000, 9999));
+
+    // Notification card (left)
+    const notif = document.createElement('div');
+    notif.className = 'tfa-notification';
+    notif.innerHTML = `
+      <div class="tfa-notif-header">${t(L.notifTitle)}</div>
+      <div class="tfa-notif-text">${t(L.notifText)}</div>
+      <div class="tfa-code" data-testid="tfa-code">${code}</div>`;
+    area.appendChild(notif);
+
+    // Login form (right)
+    const login = document.createElement('div');
+    login.className = 'tfa-login';
+    login.innerHTML = `
+      <div class="tfa-login-title">${t(L.loginTitle)}</div>
+      <div class="tfa-slots" data-testid="tfa-slots">
+        ${[0,1,2,3].map(i => `<div class="tfa-slot" data-idx="${i}"></div>`).join('')}
+      </div>`;
+    area.appendChild(login);
+    const slots = login.querySelectorAll('.tfa-slot');
+    slots[0].classList.add('active');
+
+    // Keypad (bottom-center)
+    const keypad = document.createElement('div');
+    keypad.className = 'tfa-keypad';
+    const keys = [1,2,3,4,5,6,7,8,9,'',0,''];
+    keypad.innerHTML = keys.map(k => k === ''
+      ? `<div></div>`
+      : `<button class="tfa-key" data-key="${k}" data-testid="tfa-key-${k}">${k}</button>`
+    ).join('');
+    area.appendChild(keypad);
+
+    let pos = 0;
+    let resolved = false;
+    keypad.querySelectorAll('.tfa-key').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (resolved) return;
+        const digit = btn.dataset.key;
+        const expected = code[pos];
+        if (digit === expected) {
+          slots[pos].textContent = digit;
+          slots[pos].classList.add('filled');
+          slots[pos].classList.remove('active');
+          SoundSynth.playClickSound();
+          pos++;
+          if (pos >= 4) {
+            resolved = true;
+            SoundSynth.playSnap();
+            const r = localRect(login);
+            spawnBurst(r.cx, r.cy, '#39ff14');
+            setTimeout(onWin, 500);
+          } else {
+            slots[pos].classList.add('active');
+          }
+        } else {
+          resolved = true;
+          btn.classList.add('wrong');
+          SoundSynth.playLoseSound();
+          setTimeout(onLose, 500);
+        }
+      });
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: Cookies Banner (PRIVACY) =====
+   A cookie banner appears. Player must pick "ONLY NECESSARY"
+   to protect their browsing privacy. "ACCEPT ALL" = lose.
+*/
+MiniGames.push({
+  name: 'cookies-banner',
+  topic:  { en: 'BROWSING PRIVACY', es: 'PRIVACIDAD AL NAVEGAR' },
+  prompt: { en: 'COOKIES, OK?',     es: 'COOKIES, ¿OK?' },
+  tipWin: {
+    en: 'Most websites track you with cookies. Always tap "Only Necessary" so they don\'t collect data about you and your friends.',
+    es: 'La mayoría de sitios te rastrean con cookies. Siempre toca "Solo necesarias" para que no recolecten datos tuyos ni de tus amigos.'
+  },
+  tipLose: {
+    en: 'Oops! Accepting all cookies lets sites track everywhere you go online. Pick "Only Necessary" next time.',
+    es: '¡Ups! Aceptar todas las cookies deja que los sitios te sigan por toda internet. Elige "Solo necesarias" la próxima vez.'
+  },
+  desc: {
+    en: 'A website is asking about cookies. Pick "Only Necessary" to protect your privacy!',
+    es: 'Un sitio te pregunta sobre cookies. ¡Elige "Solo necesarias" para proteger tu privacidad!'
+  },
+  instr: {
+    en: 'TO STAY PRIVATE → ALWAYS PICK "ONLY NECESSARY"',
+    es: 'PARA MANTENERTE PRIVADO → ELIGE SIEMPRE "SOLO NECESARIAS"'
+  },
+  // The fake website name shown for flavor
+  sites: {
+    en: ['fungames.com', 'cool-videos.net', 'awesome-shop.com', 'free-stickers.io', 'school-help.org'],
+    es: ['juegosdivertidos.com', 'videos-geniales.net', 'tienda-cool.com', 'stickers-gratis.io', 'ayuda-escolar.org']
+  },
+  labels: {
+    text: {
+      en: 'This site uses cookies to track your activity across the internet. Do you accept?',
+      es: 'Este sitio usa cookies para rastrear tu actividad por toda internet. ¿Aceptas?'
+    },
+    acceptBtn:    { en: 'ACCEPT ALL',     es: 'ACEPTAR TODO'    },
+    necessaryBtn: { en: 'ONLY NECESSARY', es: 'SOLO NECESARIAS' },
+  },
+  mount(area, onWin, onLose) {
+    const L = this.labels;
+    const site = pick(t(this.sites));
+
+    const browser = document.createElement('div');
+    browser.className = 'cookie-browser';
+    browser.dataset.testid = 'cookie-browser';
+    browser.innerHTML = `
+      <div class="cookie-browser-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="url-text">🔒 ${site}</span>
+      </div>
+      <div class="cookie-page">${Game.lang === 'es'
+        ? '🎮 ¡Bienvenido al sitio!\nCarga la página...\n\n[contenido del sitio]'
+        : '🎮 Welcome to the site!\nLoading page...\n\n[site content]'}</div>
+      <div class="cookie-banner">
+        <div class="cookie-banner-row">
+          <div class="cookie-icon">🍪</div>
+          <div class="cookie-text">${t(L.text)}</div>
+          <div class="cookie-buttons">
+            <button class="cookie-btn necessary" data-testid="cookie-necessary-btn">${t(L.necessaryBtn)}</button>
+            <button class="cookie-btn accept"    data-testid="cookie-accept-btn">${t(L.acceptBtn)}</button>
+          </div>
+        </div>
+      </div>`;
+    area.appendChild(browser);
+
+    const instr = document.createElement('div');
+    instr.className = 'perm-instruction';
+    instr.style.top = '18px';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    let resolved = false;
+    browser.querySelector('[data-testid="cookie-necessary-btn"]').addEventListener('click', () => {
+      if (resolved) return; resolved = true;
+      SoundSynth.playSnap();
+      const r = localRect(browser);
+      spawnBurst(r.cx, r.cy, '#39ff14');
+      browser.style.transition = 'transform 0.4s, opacity 0.4s';
+      browser.style.transform = 'scale(1.04)';
+      setTimeout(onWin, 500);
+    });
+    browser.querySelector('[data-testid="cookie-accept-btn"]').addEventListener('click', () => {
+      if (resolved) return; resolved = true;
+      SoundSynth.playLoseSound();
+      browser.style.animation = 'permWrongShake 0.5s';
+      setTimeout(onLose, 500);
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: Help a Friend (CITIZENSHIP) =====
+   A friend messages you about an online problem. Pick the right
+   way to support them. 4 options: 2 good + 2 bad. Click good = win,
+   click bad = lose.
+*/
+MiniGames.push({
+  name: 'help-a-friend',
+  topic:  { en: 'CYBER-SUPPORT NETWORK', es: 'RED DE APOYO DIGITAL' },
+  prompt: { en: 'HELP YOUR FRIEND!', es: '¡AYUDA A TU AMIGO!' },
+  tipWin: {
+    en: 'When a friend is in trouble online, help them tell a trusted adult and report or block the bullies. Never join the meanness!',
+    es: 'Si un amigo tiene un problema online, ayúdale a contárselo a un adulto y a reportar o bloquear a los acosadores. ¡Nunca te sumes a la maldad!'
+  },
+  tipLose: {
+    en: 'That advice would have hurt your friend more! Real friends help by listening, blocking the bullies, and bringing in adults — never by attacking back.',
+    es: '¡Ese consejo habría lastimado más a tu amigo! Los buenos amigos ayudan escuchando, bloqueando a los acosadores e involucrando adultos — nunca atacando.'
+  },
+  desc: {
+    en: 'A friend tells you about a problem. Pick a good way to help them — never a mean one!',
+    es: 'Un amigo te cuenta un problema. ¡Elige una forma buena de ayudar — nunca una mala!'
+  },
+  instr: {
+    en: 'YOUR FRIEND NEEDS HELP. PICK THE BEST ADVICE!',
+    es: 'TU AMIGO NECESITA AYUDA. ¡ELIGE EL MEJOR CONSEJO!'
+  },
+  pool: [
+    {
+      avatar: '😢',
+      problem: { en: 'They said mean things to me in the game chat...',
+                 es: 'Me dijeron cosas feas en el chat del juego...' },
+      good: [
+        { en: 'Tell a trusted adult',          es: 'Cuéntale a un adulto de confianza' },
+        { en: 'Block and report them',         es: 'Bloquéalo y repórtalo' },
+      ],
+      bad:  [
+        { en: 'Insult them back, harder',      es: 'Devuélvele el insulto, más fuerte' },
+        { en: 'Share their messages with everyone', es: 'Comparte sus mensajes con todos' },
+      ],
+    },
+    {
+      avatar: '😞',
+      problem: { en: 'They posted an embarrassing photo of me online...',
+                 es: 'Publicaron una foto vergonzosa mía...' },
+      good: [
+        { en: 'Report the post to the app',    es: 'Reporta el post a la app' },
+        { en: 'Ask your parents to help',      es: 'Pide ayuda a tus papás' },
+      ],
+      bad:  [
+        { en: 'Post an embarrassing photo of them', es: 'Publica una foto vergonzosa de ellos' },
+        { en: 'Laugh and say it does not matter', es: 'Ríete y di que no importa' },
+      ],
+    },
+    {
+      avatar: '😨',
+      problem: { en: 'A stranger keeps sending me weird messages...',
+                 es: 'Un desconocido me sigue mandando mensajes raros...' },
+      good: [
+        { en: 'Block them right now',          es: 'Bloquéalo ahora mismo' },
+        { en: 'Save screenshots, show an adult', es: 'Guarda capturas, muéstrasele a un adulto' },
+      ],
+      bad:  [
+        { en: 'Reply and see what they want',  es: 'Respóndele a ver qué quiere' },
+        { en: 'Send them your number to know them', es: 'Mándale tu número para conocerlo' },
+      ],
+    },
+    {
+      avatar: '😟',
+      problem: { en: 'Someone made a FAKE profile pretending to be me!',
+                 es: '¡Alguien creó un perfil FALSO haciéndose pasar por mí!' },
+      good: [
+        { en: 'Report the fake profile',       es: 'Reporta el perfil falso' },
+        { en: 'Tell a teacher or adult',       es: 'Avísale a un profe o adulto' },
+      ],
+      bad:  [
+        { en: 'Make a fake profile of them too', es: 'Crea un perfil falso de ellos también' },
+        { en: 'Ignore it, it is not important', es: 'Ignóralo, no es importante' },
+      ],
+    },
+    {
+      avatar: '🥺',
+      problem: { en: 'A group of kids suddenly stopped talking to me...',
+                 es: 'Un grupo de niños dejó de hablarme de la nada...' },
+      good: [
+        { en: 'Talk to a trusted adult',       es: 'Habla con un adulto de confianza' },
+        { en: 'Find friends who value you',    es: 'Busca amigos que te valoren' },
+      ],
+      bad:  [
+        { en: 'Insult them online behind their back', es: 'Insúltalos por la espalda online' },
+        { en: 'Cry alone and tell nobody',     es: 'Llora solo y no le digas a nadie' },
+      ],
+    },
+  ],
+  mount(area, onWin, onLose) {
+    const item = pick(this.pool);
+
+    const instr = document.createElement('div');
+    instr.className = 'help-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const card = document.createElement('div');
+    card.className = 'help-friend-card';
+    card.innerHTML = `
+      <div class="help-friend-avatar">${item.avatar}</div>
+      <div class="help-bubble" data-testid="help-bubble">"${t(item.problem)}"</div>`;
+    area.appendChild(card);
+
+    const prompt = document.createElement('div');
+    prompt.className = 'help-prompt';
+    prompt.textContent = Game.lang === 'es' ? '¿QUÉ LE ACONSEJAS?' : 'WHAT DO YOU ADVISE?';
+    area.appendChild(prompt);
+
+    // Build options: 2 good + 2 bad, shuffled
+    const opts = shuffle([
+      { text: item.good[0], isGood: true  },
+      { text: item.good[1], isGood: true  },
+      { text: item.bad[0],  isGood: false },
+      { text: item.bad[1],  isGood: false },
+    ]);
+
+    const grid = document.createElement('div');
+    grid.className = 'help-options';
+    area.appendChild(grid);
+
+    let resolved = false;
+    opts.forEach((opt, idx) => {
+      const card = document.createElement('div');
+      card.className = 'help-option';
+      card.dataset.testid = opt.isGood ? `help-good-${idx}` : `help-bad-${idx}`;
+      card.textContent = t(opt.text);
+      grid.appendChild(card);
+      card.addEventListener('click', () => {
+        if (resolved) return;
+        resolved = true;
+        if (opt.isGood) {
+          card.classList.add('correct');
+          SoundSynth.playSnap();
+          const r = localRect(card);
+          spawnBurst(r.cx, r.cy, '#39ff14');
+          setTimeout(onWin, 600);
+        } else {
+          card.classList.add('wrong');
+          SoundSynth.playLoseSound();
+          setTimeout(onLose, 600);
+        }
+      });
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: Empathy Express (CITIZENSHIP) =====
+   Friend's post with an emotion (sad/scared/happy). Drag the
+   right empathy emoji onto the post. Drop wrong emoji = lose.
+*/
+MiniGames.push({
+  name: 'empathy-express',
+  topic:  { en: 'ONLINE EMPATHY', es: 'EMPATÍA EN LÍNEA' },
+  prompt: { en: 'PICK THE RIGHT REACTION!', es: '¡ELIGE LA REACCIÓN CORRECTA!' },
+  tipWin: {
+    en: 'When a friend posts something sad, react with kindness — never with laughter or anger. Your empathy makes their day better!',
+    es: 'Si un amigo postea algo triste, reacciona con cariño — nunca con risas ni enojo. ¡Tu empatía les alegra el día!'
+  },
+  tipLose: {
+    en: 'That reaction hurt your friend! Mocking or angry emojis on sad posts is a form of bullying. Always think about how YOU would feel.',
+    es: '¡Esa reacción lastimó a tu amigo! Burlarse o reaccionar con enojo a posts tristes es una forma de bullying. Piensa cómo TE sentirías tú.'
+  },
+  desc: {
+    en: 'Drag the kind emoji that matches your friend\'s feelings onto their post!',
+    es: '¡Arrastra el emoji amable que coincida con lo que siente tu amigo!'
+  },
+  instr: {
+    en: 'DRAG THE RIGHT EMOJI ONTO THE POST. BE KIND!',
+    es: 'ARRASTRA EL EMOJI CORRECTO AL POST. ¡SÉ AMABLE!'
+  },
+  pool: [
+    { avatar: '😢',
+      post:  { en: 'My puppy passed away today...',  es: 'Hoy se murió mi perrito...' },
+      good:  ['❤️', '🫂'],  // hugs / love
+      bad:   ['🤣', '😡', '🎉', '🤡'],
+    },
+    { avatar: '🎉',
+      post:  { en: 'I got a 10 on my exam! 🎊',     es: '¡Saqué un 10 en mi examen! 🎊' },
+      good:  ['🎉', '👏'],
+      bad:   ['😢', '😡', '🤡', '🙄'],
+    },
+    { avatar: '😨',
+      post:  { en: 'I have my school play tomorrow and I am SO scared...',
+               es: 'Mañana es mi obra del cole y me da MUCHO miedo...' },
+      good:  ['💪', '🫂'],
+      bad:   ['🤣', '🙄', '😡', '🤡'],
+    },
+    { avatar: '🤒',
+      post:  { en: 'Stuck in bed sick all weekend 😷', es: 'Enfermo en cama todo el finde 😷' },
+      good:  ['❤️', '🌻'],
+      bad:   ['🤣', '😡', '🎉', '🙄'],
+    },
+    { avatar: '😞',
+      post:  { en: 'Kids said mean things to me at school today...',
+               es: 'Hoy unos niños me dijeron cosas feas en el cole...' },
+      good:  ['❤️', '💪'],
+      bad:   ['🤣', '😡', '🤡', '🎉'],
+    },
+    { avatar: '🥺',
+      post:  { en: 'My grandma is in the hospital. Sending her love...',
+               es: 'Mi abuela está en el hospital. Le mando cariño...' },
+      good:  ['❤️', '🌻'],
+      bad:   ['🤣', '🙄', '😡', '🤡'],
+    },
+  ],
+  mount(area, onWin, onLose) {
+    const item = pick(this.pool);
+
+    const instr = document.createElement('div');
+    instr.className = 'emp-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const post = document.createElement('div');
+    post.className = 'emp-post';
+    post.dataset.testid = 'emp-post';
+    post.innerHTML = `
+      <div class="emp-post-header">
+        <div class="emp-post-avatar">${item.avatar}</div>
+        <div>${Game.lang === 'es' ? '@amigo_a · POST' : '@friend · POST'}</div>
+      </div>
+      <div class="emp-post-body">"${t(item.post)}"</div>`;
+    area.appendChild(post);
+
+    const hint = document.createElement('div');
+    hint.className = 'emp-hint';
+    hint.textContent = Game.lang === 'es' ? '↓ ARRASTRA UN EMOJI ARRIBA ↑' : '↓ DRAG AN EMOJI UP ↑';
+    area.appendChild(hint);
+
+    // Build 1 good + 3 bad stickers (shuffled). Reduce visual clutter.
+    const goodSticker = pick(item.good);
+    const badStickers = shuffle(item.bad).slice(0, 3);
+    const allStickers = shuffle([
+      { emoji: goodSticker, isGood: true },
+      ...badStickers.map(e => ({ emoji: e, isGood: false })),
+    ]);
+
+    // Position each sticker manually since .draggable forces position:absolute.
+    // Lay them out evenly along the bottom row of the game area (~460px top).
+    const count = allStickers.length;
+    const gap = 22;
+    const stickerW = 70;
+    const totalW = count * stickerW + (count - 1) * gap;
+    const startX = (960 - totalW) / 2;
+    const homeTop = 450;
+
+    let resolved = false;
+    allStickers.forEach((s, idx) => {
+      const el = document.createElement('div');
+      el.className = 'emp-sticker draggable';
+      el.dataset.testid = s.isGood ? `emp-good-${idx}` : `emp-bad-${idx}`;
+      el.textContent = s.emoji;
+      const homeLeft = startX + idx * (stickerW + gap);
+      el.style.left = homeLeft + 'px';
+      el.style.top  = homeTop + 'px';
+      area.appendChild(el);
+
+      makeDraggable(el, {
+        disabled: () => resolved,
+        onDrag: () => {
+          const pR = localRect(post);
+          const eR = localRect(el);
+          post.classList.toggle('drop-hover', overlaps(eR, pR));
+        },
+        onRelease: () => {
+          if (resolved) return;
+          post.classList.remove('drop-hover');
+          const pR = localRect(post);
+          const eR = localRect(el);
+          if (!overlaps(eR, pR)) {
+            // Released outside the post — snap back to home position
+            el.style.transition = 'left 0.25s, top 0.25s';
+            el.style.left = homeLeft + 'px';
+            el.style.top  = homeTop + 'px';
+            setTimeout(() => { el.style.transition = ''; }, 260);
+            return;
+          }
+          resolved = true;
+          if (s.isGood) {
+            post.classList.add('correct');
+            SoundSynth.playSnap();
+            spawnBurst(pR.cx, pR.cy, '#39ff14');
+            setTimeout(onWin, 600);
+          } else {
+            post.classList.add('wrong');
+            SoundSynth.playLoseSound();
+            setTimeout(onLose, 600);
+          }
+        }
+      });
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game: Phone Scam (DANGERS) =====
+   Phone rings, scammer pretends to be bank/microsoft/relative
+   and asks for sensitive info. Always HANG UP to win.
+*/
+MiniGames.push({
+  name: 'phone-scam',
+  topic:  { en: 'PHONE SCAM ALERT', es: 'ALERTA DE ESTAFA TELEFÓNICA' },
+  prompt: { en: 'WHO IS CALLING?', es: '¿QUIÉN LLAMA?' },
+  tipWin: {
+    en: 'Banks and Microsoft NEVER call asking for your PIN, password, or remote access. If someone asks, hang up and tell an adult.',
+    es: 'Los bancos y Microsoft NUNCA llaman pidiéndote tu PIN, contraseña o acceso remoto. Si alguien lo pide, cuelga y avísale a un adulto.'
+  },
+  tipLose: {
+    en: 'You just gave away your data! Real banks never call asking for PINs. Always HANG UP and check by calling the official number yourself.',
+    es: '¡Acabas de dar tus datos! Los bancos reales nunca llaman pidiendo PINs. Siempre CUELGA y verifica llamando tú al número oficial.'
+  },
+  desc: {
+    en: 'A "bank" or "tech support" calls asking for your private info. Hang up — they are scammers!',
+    es: 'Un "banco" o "soporte técnico" llama pidiéndote info privada. ¡Cuelga — son estafadores!'
+  },
+  instr: {
+    en: 'NEVER GIVE PRIVATE INFO OVER THE PHONE. HANG UP!',
+    es: 'NUNCA DES INFO PRIVADA POR TELÉFONO. ¡CUELGA!'
+  },
+  // All items are TRAPS — always pick HANG UP to win.
+  pool: [
+    { icon: '🏦',
+      caller:  { en: 'XYZ BANK - URGENT', es: 'BANCO XYZ - URGENTE' },
+      message: { en: 'Hi! I am from your bank. Quick, give me your PIN to "protect" your account!',
+                 es: '¡Hola! Soy de tu banco. ¡Rápido, dame tu PIN para "proteger" tu cuenta!' } },
+    { icon: '💻',
+      caller:  { en: 'MICROSOFT SUPPORT', es: 'SOPORTE MICROSOFT' },
+      message: { en: 'Your computer has a virus! Let me access it remotely to "fix" it.',
+                 es: '¡Tu computadora tiene un virus! Déjame accederla remotamente para "arreglarla".' } },
+    { icon: '🎁',
+      caller:  { en: 'YOU WON $1000!', es: '¡GANASTE $1000!' },
+      message: { en: 'Congratulations! Just give me your card number to send the prize money.',
+                 es: '¡Felicidades! Solo dame tu número de tarjeta para mandarte el premio.' } },
+    { icon: '👮',
+      caller:  { en: 'POLICE STATION', es: 'COMISARÍA' },
+      message: { en: 'Officer here. Tell me your parents\' passwords or there will be trouble.',
+                 es: 'Soy oficial. Dame las contraseñas de tus papás o habrá problemas.' } },
+    { icon: '👤',
+      caller:  { en: 'UNKNOWN COUSIN?', es: '¿PRIMO DESCONOCIDO?' },
+      message: { en: 'Hi cousin! I forgot my TikTok password. Send me yours so I can copy it!',
+                 es: '¡Hola primo! Olvidé mi contraseña de TikTok. ¡Mándame la tuya para copiarla!' } },
+    { icon: '📧',
+      caller:  { en: 'IT DEPT - SCHOOL', es: 'DEPTO TI - ESCUELA' },
+      message: { en: 'School IT here. Give me your email password to "update" your account.',
+                 es: 'Soy del depto de TI del cole. Dame tu contraseña del correo para "actualizar".' } },
+  ],
+  labels: {
+    incoming:    { en: 'INCOMING CALL', es: 'LLAMADA ENTRANTE' },
+    giveBtn:     { en: 'GIVE INFO',     es: 'DAR DATOS'        },
+    hangBtn:     { en: 'HANG UP',       es: 'COLGAR'           },
+  },
+  mount(area, onWin, onLose) {
+    const item = pick(this.pool);
+    const L = this.labels;
+
+    const instr = document.createElement('div');
+    instr.className = 'scam-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    const phone = document.createElement('div');
+    phone.className = 'scam-phone';
+    phone.dataset.testid = 'scam-phone';
+    phone.innerHTML = `
+      <div class="scam-phone-screen">
+        <div class="scam-incoming">${t(L.incoming)}</div>
+        <div class="scam-icon">${item.icon}</div>
+        <div class="scam-caller-id" data-testid="scam-caller">${t(item.caller)}</div>
+        <div style="font-family:'Press Start 2P'; font-size:8px; color:var(--neon-cyan); letter-spacing:1px;">
+          📞 RING RING...
+        </div>
+      </div>`;
+    area.appendChild(phone);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'scam-bubble';
+    bubble.innerHTML = `"${t(item.message)}"`;
+    area.appendChild(bubble);
+
+    const buttons = document.createElement('div');
+    buttons.className = 'scam-buttons';
+    buttons.innerHTML = `
+      <button class="scam-btn hang" data-testid="scam-hang-btn">${t(L.hangBtn)}</button>
+      <button class="scam-btn give" data-testid="scam-give-btn">${t(L.giveBtn)}</button>`;
+    area.appendChild(buttons);
+
+    let resolved = false;
+    buttons.querySelector('[data-testid="scam-hang-btn"]').addEventListener('click', () => {
+      if (resolved) return; resolved = true;
+      SoundSynth.playSnap();
+      phone.classList.add('correct');
+      const r = localRect(phone);
+      spawnBurst(r.cx, r.cy, '#39ff14');
+      setTimeout(onWin, 600);
+    });
+    buttons.querySelector('[data-testid="scam-give-btn"]').addEventListener('click', () => {
+      if (resolved) return; resolved = true;
+      SoundSynth.playLoseSound();
+      phone.classList.add('wrong');
+      setTimeout(onLose, 600);
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game 2: Meme Shield ===== */
+MiniGames.push({
+  name: 'meme-shield',
+  topic:  { en: 'DIGITAL WELL-BEING', es: 'BIENESTAR DIGITAL' },
+  prompt: { en: 'BLOCK THE BULLY!',   es: '¡BLOQUEA AL ABUSÓN!' },
+  tipWin:  {
+    en: 'Be kind online! If you see mean comments or offensive memes, do not share them. Talk to a trusted adult or teacher.',
+    es: '¡Sé amable en línea! Si ves comentarios crueles o memes ofensivos, no los compartas. Habla con un adulto o maestro de confianza.'
+  },
+  tipLose: {
+    en: 'Be kind online! If you see mean comments or offensive memes, do not share them. Talk to a trusted adult or teacher.',
+    es: '¡Sé amable en línea! Si ves comentarios crueles o memes ofensivos, no los compartas. Habla con un adulto o maestro de confianza.'
+  },
+  desc: {
+    en: 'Click only the mean red messages to block them. Let the kind green ones pass!',
+    es: '¡Haz clic solo en los mensajes rojos crueles para bloquearlos. Deja pasar los verdes amables!'
+  },
+  instr:  {
+    en: 'CLICK ONLY THE MEAN MESSAGES (RED). LET THE NICE ONES (GREEN) PASS.',
+    es: 'HAZ CLIC SOLO EN LOS MENSAJES CRUELES (ROJOS). DEJA PASAR LOS BUENOS (VERDES).'
+  },
+  badMemes: {
+    en: ['UR DUMB!', 'NOBODY LIKES U', 'LOSER!!!', 'GO AWAY', 'UGLY!!!'],
+    es: ['¡ERES TONTO!', 'NADIE TE QUIERE', '¡PERDEDOR!', '¡VETE!', '¡FEO!']
+  },
+  goodMemes: {
+    en: ['GREAT JOB!', 'YOU ROCK!', 'HI FRIEND', 'NICE WORK', 'KEEP GOING'],
+    es: ['¡BUEN TRABAJO!', '¡ERES GENIAL!', 'HOLA AMIGO', 'MUY BIEN', '¡SIGUE ASÍ!']
+  },
+  _interval: null,
+  _resolved: false,
+  mount(area, onWin, onLose) {
+    this._resolved = false;
+    area.classList.add('meme-mode'); // custom shield cursor without renaming id
+
+    // Fixed instruction header — solid white with bottom border.
+    // z-index keeps it above any falling bubbles so text is never overlapped.
+    const header = document.createElement('div');
+    header.className = 'meme-header';
+    header.textContent = t(this.instr);
+    area.appendChild(header);
+
+    // Custom shield cursor
+    const cursor = document.createElement('div');
+    cursor.id = 'meme-shield-cursor';
+    cursor.style.display = 'block';
+    cursor.innerHTML = `
+      <svg viewBox="0 0 48 56" width="48" height="56">
+        <polygon points="24,2 46,12 42,38 24,54 6,38 2,12" fill="#00f0ff" stroke="#0d0221" stroke-width="3"/>
+        <polygon points="24,12 36,18 34,34 24,44 14,34 12,18" fill="#ff2975" stroke="#0d0221" stroke-width="2"/>
+      </svg>`;
+    area.appendChild(cursor);
+
+    const moveCursor = (e) => {
+      const ar = area.getBoundingClientRect();
+      const scale = ar.width / 1000;
+      cursor.style.left = ((e.clientX - ar.left) / scale - 24) + 'px';
+      cursor.style.top  = ((e.clientY - ar.top)  / scale - 28) + 'px';
+    };
+    area.addEventListener('mousemove', moveCursor);
+    this._moveCursor = moveCursor;
+
+    const badMemes = t(this.badMemes);
+    const goodMemes = t(this.goodMemes);
+    let badRemaining = 4;
+    let badEscaped = 0;
+    let badSpawned = 0;
+    const totalBad = 4;
+    const allBubbles = [];
+
+    const spawn = (isBad) => {
+      const b = document.createElement('div');
+      b.className = 'meme-bubble ' + (isBad ? 'bad' : 'good');
+      b.textContent = isBad ? pick(badMemes) : pick(goodMemes);
+      b.dataset.bad = isBad ? '1' : '0';
+      b.dataset.testid = isBad ? 'bad-meme' : 'good-meme';
+      const x = randInt(60, 800);
+      b.style.left = x + 'px';
+      b.style.top = '-60px';
+      area.appendChild(b);
+      let y = -60;
+      const speed = randInt(70, 110); // px per second
+      const startT = performance.now();
+      const step = (now) => {
+        if (this._resolved) return;
+        if (!b.parentNode) return;
+        const dt = (now - startT) / 1000;
+        y = -60 + speed * dt;
+        b.style.top = y + 'px';
+        if (y > 540) {
+          if (isBad) {
+            badEscaped++;
+            b.remove();
+            if (!this._resolved) {
+              this._resolved = true;
+              SoundSynth.playLoseSound();
+              setTimeout(onLose, 400);
+            }
+            return;
+          } else {
+            b.remove();
+            return;
+          }
+        }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+      b.addEventListener('click', () => {
+        if (this._resolved) return;
+        if (isBad) {
+          b.classList.add('blocked');
+          SoundSynth.playDeflect();
+          spawnBurst(parseInt(b.style.left) + 70, y + 30, '#00f0ff');
+          badRemaining--;
+          setTimeout(() => b.remove(), 400);
+          if (badRemaining <= 0) {
+            this._resolved = true;
+            setTimeout(onWin, 300);
+          }
+        } else {
+          // Wrong - clicked nice meme
+          b.classList.add('wronged');
+          SoundSynth.playLoseSound();
+          setTimeout(() => b.remove(), 400);
+          if (!this._resolved) {
+            this._resolved = true;
+            setTimeout(onLose, 400);
+          }
+        }
+      });
+      allBubbles.push(b);
+    };
+
+    // Spawn schedule
+    let i = 0;
+    const schedule = shuffle([
+      {bad: true}, {bad: false}, {bad: true}, {bad: false},
+      {bad: true}, {bad: false}, {bad: true}
+    ]);
+    this._interval = setInterval(() => {
+      if (this._resolved) { clearInterval(this._interval); return; }
+      if (i >= schedule.length) { clearInterval(this._interval); return; }
+      spawn(schedule[i].bad);
+      i++;
+    }, 700);
+    this._area = area;
+  },
+  cleanup() {
+    if (this._interval) clearInterval(this._interval);
+    if (this._area && this._moveCursor) {
+      this._area.removeEventListener('mousemove', this._moveCursor);
+      this._area.classList.remove('meme-mode');
+    }
+    this._resolved = true;
+  }
+});
+
+/* ===== Mini-Game 3: Fake News Detective =====
+   The screen randomly shows either a FAKE alert or a TRUE alert.
+   Player drags it to TRASH (for fake) or VERIFIED FOLDER (for true).
+   Wrong drop = lose, correct drop = win.
+*/
+MiniGames.push({
+  name: 'fake-news',
+  topic:  { en: 'MEDIA LITERACY',  es: 'ALFABETIZACIÓN MEDIÁTICA' },
+  prompt: { en: 'TRUE OR FAKE?',   es: '¿VERDAD O MENTIRA?' },
+  tipWin:  {
+    en: 'Not everything on the internet is true! If a story sounds too crazy or scary, check the source before sharing.',
+    es: '¡No todo en internet es real! Si una noticia suena muy alocada o da miedo, verifica la fuente antes de compartir.'
+  },
+  tipLose: {
+    en: 'Not everything on the internet is true! If a story sounds too crazy or scary, check the source before sharing.',
+    es: '¡No todo en internet es real! Si una noticia suena muy alocada o da miedo, verifica la fuente antes de compartir.'
+  },
+  desc: {
+    en: 'Drag fake alerts to the TRASH and true messages to the VERIFIED folder!',
+    es: '¡Arrastra las alertas falsas a la BASURA y los mensajes verdaderos a la carpeta VERIFICADO!'
+  },
+  // Pool of alerts. `fake: true` items belong in trash, others in verified folder.
+  pool: [
+    { fake: true,  text: { en: '⚠ FORWARD THIS TO 10 FRIENDS OR YOUR PHONE WILL EXPLODE TONIGHT!!! 100% TRUE!!!',
+                            es: '⚠ ¡¡¡REENVÍA ESTO A 10 AMIGOS O TU CELULAR EXPLOTARÁ ESTA NOCHE!!! ¡¡¡100% REAL!!!' } },
+    { fake: true,  text: { en: '🚨 THE SCHOOL IS CLOSED FOREVER!!! SHARE NOW!!!',
+                            es: '🚨 ¡¡¡CIERRAN LA ESCUELA PARA SIEMPRE!!! ¡COMPARTE YA!' } },
+    { fake: true,  text: { en: '🎁 FREE iPHONE FOR EVERY KID WHO REPOSTS THIS!!!',
+                            es: '🎁 ¡¡¡iPHONE GRATIS PARA CADA NIÑO QUE REENVÍE ESTO!!!' } },
+    { fake: true,  text: { en: '👻 A GHOST IS HACKING WIFI ROUTERS TONIGHT! UNPLUG NOW!!',
+                            es: '👻 ¡UN FANTASMA HACKEARÁ LOS WIFI ESTA NOCHE! ¡DESCONECTA YA!' } },
+    { fake: false, text: { en: '📚 Homework deadline: pages 30-32 due tomorrow morning. — Mrs. Smith',
+                            es: '📚 Tarea: páginas 30-32 para mañana. — Sra. Pérez' } },
+    { fake: false, text: { en: '🏫 School field trip permission form is due Friday. — Principal Office',
+                            es: '🏫 La autorización para la excursión escolar vence el viernes. — Dirección' } },
+    { fake: false, text: { en: '🎨 Art Club meets Wednesday at 3pm in Room 12. — Art Teacher',
+                            es: '🎨 Club de Arte el miércoles a las 3pm en el Salón 12. — Maestra de Arte' } },
+  ],
+  mount(area, onWin, onLose) {
+    // Pick a random alert from the pool
+    const item = pick(this.pool);
+
+    // Phone frame in the middle-left
+    const phone = document.createElement('div');
+    phone.className = 'phone-frame';
+    phone.style.left = '110px';
+    phone.style.transform = 'none';
+    phone.innerHTML = `<div class="phone-screen-title">${Game.lang === 'es' ? '¡ALERTA DE CHAT!' : 'CHAT ALERT!'}</div>`;
+    area.appendChild(phone);
+
+    // The alert message (style varies by fake/true)
+    const alertEl = document.createElement('div');
+    alertEl.className = 'news-alert draggable ' + (item.fake ? 'fake' : 'true');
+    alertEl.dataset.testid = item.fake ? 'fake-news-alert' : 'true-news-alert';
+    alertEl.dataset.fake = item.fake ? '1' : '0';
+    alertEl.textContent = t(item.text);
+    alertEl.style.position = 'absolute';
+    alertEl.style.left = '130px';
+    alertEl.style.top  = '120px';
+    alertEl.style.width = '240px';
+    area.appendChild(alertEl);
+
+    // Trash bin (for fake)
+    const bin = document.createElement('div');
+    bin.className = 'recycle-bin';
+    bin.dataset.testid = 'recycle-bin';
+    bin.innerHTML = `<div class="bin-icon">🗑</div><div>${Game.lang === 'es' ? 'BASURA' : 'TRASH'}</div>`;
+    area.appendChild(bin);
+
+    // Verified folder (for true)
+    const folder = document.createElement('div');
+    folder.className = 'verified-folder';
+    folder.dataset.testid = 'verified-folder';
+    folder.innerHTML = `<div class="folder-icon">✅</div><div>${Game.lang === 'es' ? 'VERIFICADO' : 'VERIFIED'}</div>`;
+    area.appendChild(folder);
+
+    let resolved = false;
+    makeDraggable(alertEl, {
+      onDrag: (el) => {
+        const aR = localRect(el);
+        bin.classList.toggle('hover',    overlaps(aR, localRect(bin)));
+        folder.classList.toggle('hover', overlaps(aR, localRect(folder)));
+      },
+      onRelease: (el) => {
+        if (resolved) return;
+        const aR = localRect(el);
+        const bR = localRect(bin);
+        const fR = localRect(folder);
+        let target = null;
+        if (overlaps(aR, bR)) target = 'trash';
+        else if (overlaps(aR, fR)) target = 'verified';
+        if (!target) {
+          bin.classList.remove('hover');
+          folder.classList.remove('hover');
+          return;
+        }
+        resolved = true;
+        const isCorrect = (target === 'trash' && item.fake) || (target === 'verified' && !item.fake);
+        const zoneR = target === 'trash' ? bR : fR;
+        if (isCorrect) {
+          el.style.transition = 'transform 0.4s, opacity 0.4s';
+          el.style.transform = 'scale(0.1) rotate(360deg)';
+          el.style.opacity = '0';
+          (target === 'trash' ? bin : folder).classList.add('hover');
+          if (target === 'trash') SoundSynth.playCrumple();
+          else SoundSynth.playSnap();
+          spawnBurst(zoneR.cx, zoneR.cy, '#39ff14');
+          setTimeout(onWin, 500);
+        } else {
+          el.style.transition = 'transform 0.4s';
+          el.style.transform = 'scale(1.3)';
+          SoundSynth.playLoseSound();
+          setTimeout(onLose, 500);
+        }
+      }
+    });
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game 4: Inbox Cleaner ===== */
+MiniGames.push({
+  name: 'inbox-cleaner',
+  topic:  { en: 'DIGITAL RISKS', es: 'RIESGOS DIGITALES' },
+  prompt: { en: 'SORT THE MAIL!', es: '¡ORDENA EL CORREO!' },
+  tipWin: {
+    en: 'Watch your inbox! Never open emails or click links from strange senders or accounts promising free prizes.',
+    es: '¡Cuidado con tu bandeja! Nunca abras correos ni hagas clic en enlaces de remitentes extraños o cuentas que prometen premios gratis.'
+  },
+  tipLose: {
+    en: 'Watch your inbox! Never open emails or click links from strange senders or accounts promising free prizes.',
+    es: '¡Cuidado con tu bandeja! Nunca abras correos ni hagas clic en enlaces de remitentes extraños o cuentas que prometen premios gratis.'
+  },
+  desc: {
+    en: 'Drag virus emails to the trash and safe emails to the inbox!',
+    es: '¡Arrastra los correos con virus al basurero y los correos seguros a la bandeja!'
+  },
+  emailsPool: {
+    en: [
+      {from: 'F.R.E.E.PRIZES@xx',  text: 'FREE ROBUX! CLICK HERE NOW!!!', virus: true},
+      {from: 'WINNER-BOT',         text: 'YOU WON 1000000$ CLICK LINK', virus: true},
+      {from: 'Mrs. Smith',         text: 'Homework due Friday - reading p.42', virus: false},
+      {from: 'Best Friend',        text: 'See you at recess!', virus: false},
+      {from: 'h4ck3r@spam.zz',     text: 'YOUR ACCOUNT IS INFECTED CLICK FAST', virus: true},
+      {from: 'Mom',                text: 'Pick up milk after school. Love you!', virus: false}
+    ],
+    es: [
+      {from: 'PREM10S.GRAT1S@xx',  text: '¡ROBUX GRATIS! ¡HAZ CLIC AQUÍ AHORA!', virus: true},
+      {from: 'BOT-GANADOR',        text: '¡GANASTE 1000000$ HAZ CLIC EN EL ENLACE!', virus: true},
+      {from: 'Sra. Pérez',         text: 'Tarea para el viernes - lectura pág. 42', virus: false},
+      {from: 'Mejor Amigo',        text: '¡Nos vemos en el recreo!', virus: false},
+      {from: 'h4ck3r@spam.zz',     text: '¡TU CUENTA ESTÁ INFECTADA HAZ CLIC RÁPIDO!', virus: true},
+      {from: 'Mamá',               text: 'Compra leche después de la escuela. ¡Te quiero!', virus: false}
+    ]
+  },
+  inboxLabel: { en: 'INBOX<br>(SAFE)',  es: 'BANDEJA<br>(SEGURO)' },
+  trashLabel: { en: 'TRASH<br>(VIRUS)', es: 'BASURA<br>(VIRUS)' },
+  fromLabel:  { en: 'FROM:', es: 'DE:' },
+  progressLabel: { en: 'SORTED', es: 'CLASIFICADOS' },
+  mount(area, onWin, onLose) {
+    const emails = shuffle(t(this.emailsPool)).slice(0, 5);
+    const fromTxt = t(this.fromLabel);
+
+    const inbox = document.createElement('div');
+    inbox.className = 'inbox-zone';
+    inbox.dataset.testid = 'inbox-zone';
+    inbox.innerHTML = `<div class="zone-icon">📥</div><div>${t(this.inboxLabel)}</div>`;
+    area.appendChild(inbox);
+
+    const trash = document.createElement('div');
+    trash.className = 'trash-zone';
+    trash.dataset.testid = 'trash-zone';
+    trash.innerHTML = `<div class="zone-icon">🗑</div><div>${t(this.trashLabel)}</div>`;
+    area.appendChild(trash);
+
+    const progress = document.createElement('div');
+    progress.id = 'inbox-progress';
+    progress.dataset.testid = 'inbox-progress';
+    progress.textContent = `${t(this.progressLabel)} 0 / ${emails.length}`;
+    area.appendChild(progress);
+
+    let sorted = 0;
+    let correct = 0;
+    let resolved = false;
+    let current = null;
+
+    const showNext = () => {
+      if (resolved) return;
+      if (sorted >= emails.length) {
+        resolved = true;
+        if (correct >= 3) setTimeout(onWin, 200);
+        else setTimeout(onLose, 200);
+        return;
+      }
+      const data = emails[sorted];
+      const card = document.createElement('div');
+      card.className = 'email-card draggable' + (data.virus ? ' virus' : '');
+      card.dataset.testid = data.virus ? 'email-virus' : 'email-safe';
+      card.innerHTML = `<div class="from">${fromTxt} ${data.from}</div>${data.text}`;
+      area.appendChild(card);
+      current = card;
+
+      makeDraggable(card, {
+        onDrag: (el) => {
+          const eR = localRect(el);
+          const iR = localRect(inbox);
+          const tR = localRect(trash);
+          inbox.classList.toggle('hover', overlaps(eR, iR));
+          trash.classList.toggle('hover', overlaps(eR, tR));
+        },
+        onRelease: (el) => {
+          const eR = localRect(el);
+          const iR = localRect(inbox);
+          const tR = localRect(trash);
+          let placed = null;
+          if (overlaps(eR, iR)) placed = 'inbox';
+          else if (overlaps(eR, tR)) placed = 'trash';
+          if (placed) {
+            const isCorrect = (placed === 'inbox' && !data.virus) || (placed === 'trash' && data.virus);
+            if (placed === 'inbox' && data.virus) {
+              // CRITICAL FAIL: virus sorted to inbox
+              resolved = true;
+              SoundSynth.playLoseSound();
+              el.style.transition = 'transform 0.4s';
+              el.style.transform = 'scale(1.3)';
+              el.style.background = '#ff124f';
+              setTimeout(onLose, 600);
+              return;
+            }
+            if (isCorrect) {
+              correct++;
+              SoundSynth.playSnap();
+              spawnBurst(eR.cx, eR.cy, placed === 'inbox' ? '#39ff14' : '#ff124f');
+            } else {
+              SoundSynth.playDeflect();
+            }
+            el.style.transition = 'opacity 0.3s, transform 0.3s';
+            el.style.opacity = '0';
+            el.style.transform = 'scale(0.6)';
+            sorted++;
+            progress.textContent = `${t(this.progressLabel)} ${sorted} / ${emails.length}`;
+            setTimeout(() => {
+              el.remove();
+              inbox.classList.remove('hover');
+              trash.classList.remove('hover');
+              // Win condition: 3+ correct already?
+              if (correct >= 3 && !resolved) {
+                resolved = true;
+                setTimeout(onWin, 250);
+                return;
+              }
+              showNext();
+            }, 300);
+          }
+        }
+      });
+    };
+    showNext();
+    this._inbox = inbox; this._trash = trash;
+  },
+  cleanup() {}
+});
+
+/* ===== Mini-Game 5: Phishing Hook Cut ===== */
+MiniGames.push({
+  name: 'phishing-hook',
+  topic:  { en: 'PHISHING AWARENESS', es: 'CONCIENCIA SOBRE PHISHING' },
+  prompt: { en: 'CUT THE PHISHING HOOK!', es: '¡CORTA EL ANZUELO!' },
+  tipWin: {
+    en: 'Scammers use phishing hooks to steal your data with fake prize promises. If it looks too good to be true, cut the link!',
+    es: 'Los estafadores usan anzuelos para robar tus datos con falsas promesas de premios. ¡Si parece demasiado bueno para ser verdad, corta el enlace!'
+  },
+  tipLose: {
+    en: 'Scammers use phishing hooks to steal your data with fake prize promises. If it looks too good to be true, cut the link!',
+    es: 'Los estafadores usan anzuelos para robar tus datos con falsas promesas de premios. ¡Si parece demasiado bueno para ser verdad, corta el enlace!'
+  },
+  desc: {
+    en: 'Use the scissors cursor to click and cut the glowing cyan line!',
+    es: '¡Usa el cursor de tijeras para hacer clic y cortar la línea cian brillante!'
+  },
+  instr:    { en: 'CLICK THE GLOWING CYAN LINE TO SNIP IT!', es: '¡HAZ CLIC EN LA LÍNEA CIAN BRILLANTE PARA CORTARLA!' },
+  bait:     { en: '🎁 CLAIM PRIZE HERE 🎁',                  es: '🎁 RECLAMA TU PREMIO AQUÍ 🎁' },
+  baitSub:  { en: '100% FREE!',                              es: '¡100% GRATIS!' },
+  mount(area, onWin, onLose) {
+    area.classList.add('phish-mode'); // custom scissors cursor without renaming id
+
+    const instr = document.createElement('div');
+    instr.className = 'phish-instruction';
+    instr.textContent = t(this.instr);
+    area.appendChild(instr);
+
+    // The dangling line
+    const line = document.createElement('div');
+    line.className = 'phish-line';
+    line.dataset.testid = 'phish-line';
+    line.style.height = '240px';
+    line.style.top = '80px';
+    area.appendChild(line);
+
+    // Hook curve
+    const hook = document.createElement('div');
+    hook.className = 'phish-hook';
+    hook.style.top = '320px';
+    area.appendChild(hook);
+
+    // The bait button
+    const bait = document.createElement('div');
+    bait.className = 'phish-bait';
+    bait.dataset.testid = 'phish-bait';
+    bait.style.top = '360px';
+    bait.innerHTML = `${t(this.bait)}<br><span style="font-size:10px">${t(this.baitSub)}</span>`;
+    area.appendChild(bait);
+
+    // Scissors cursor (custom)
+    const scissors = document.createElement('div');
+    scissors.className = 'scissors-cursor';
+    scissors.innerHTML = `
+      <svg viewBox="0 0 32 32" width="40" height="40">
+        <circle cx="9" cy="22" r="5" fill="none" stroke="#ff2975" stroke-width="3"/>
+        <circle cx="23" cy="22" r="5" fill="none" stroke="#ff2975" stroke-width="3"/>
+        <line x1="13" y1="18" x2="28" y2="3" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+        <line x1="19" y1="18" x2="4" y2="3"  stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+      </svg>`;
+    area.appendChild(scissors);
+
+    const moveCursor = (e) => {
+      const ar = area.getBoundingClientRect();
+      const scale = ar.width / 960;
+      scissors.style.left = ((e.clientX - ar.left) / scale - 20) + 'px';
+      scissors.style.top  = ((e.clientY - ar.top)  / scale - 20) + 'px';
+    };
+    area.addEventListener('mousemove', moveCursor);
+    this._moveCursor = moveCursor;
+    this._area = area;
+
+    let won = false;
+    // Clicking the line cuts it
+    const cutHandler = (e) => {
+      if (won) return;
+      won = true;
+      line.classList.add('cut');
+      bait.classList.add('dropped');
+      SoundSynth.playSnip();
+      const r = localRect(line);
+      spawnBurst(r.cx, r.cy, '#00f0ff');
+      setTimeout(onWin, 600);
+    };
+    line.addEventListener('click', cutHandler);
+    // Make line slightly bigger click target
+    line.style.padding = '0 8px';
+    line.style.boxSizing = 'content-box';
+
+    // Clicking the bait button = lose (taking the bait!)
+    bait.addEventListener('click', (e) => {
+      if (won) return;
+      won = true;
+      SoundSynth.playLoseSound();
+      bait.style.transform = 'translateX(-50%) scale(1.4)';
+      bait.style.background = '#ff124f';
+      setTimeout(onLose, 500);
+    });
+  },
+  cleanup() {
+    if (this._area && this._moveCursor) {
+      this._area.removeEventListener('mousemove', this._moveCursor);
+      this._area.classList.remove('phish-mode');
+    }
+  }
+});
+
+/* ---------------------------------------------------------
+   8. GAME FLOW CONTROLLER
+   --------------------------------------------------------- */
+function startNewGame(category) {
+  Game.currentCategory = category || Game.currentCategory || 'citizenship';
+  const cat = Game.currentCategory;
+  Game.history = [];
+  Game.lives = 3;
+  Game.roundsWon = 0;
+  Game.currentTimerSec = 15;
+  Screens.hud(true);
+  renderLives();
+  document.getElementById('round-label').textContent = `${t('round')} 1`;
+
+  let categoryGames = [];
+  if (cat === 'citizenship') {
+    categoryGames = [
+      MiniGames.find(mg => mg.name === 'fake-news'),
+      MiniGames.find(mg => mg.name === 'meme-shield'),
+      MiniGames.find(mg => mg.name === 'think-before-post'),
+      MiniGames.find(mg => mg.name === 'help-a-friend'),
+      MiniGames.find(mg => mg.name === 'empathy-express'),
+    ];
+  } else if (cat === 'dangers') {
+    categoryGames = [
+      MiniGames.find(mg => mg.name === 'phishing-hook'),
+      MiniGames.find(mg => mg.name === 'inbox-cleaner'),
+      MiniGames.find(mg => mg.name === 'url-detective'),
+      MiniGames.find(mg => mg.name === 'download-warning'),
+      MiniGames.find(mg => mg.name === 'phone-scam'),
+    ];
+  } else if (cat === 'privacy') {
+    categoryGames = [
+      MiniGames.find(mg => mg.name === 'password-puzzle'),
+      MiniGames.find(mg => mg.name === 'app-permissions'),
+      MiniGames.find(mg => mg.name === 'screen-lock'),
+      MiniGames.find(mg => mg.name === 'tfa-quiz'),
+      MiniGames.find(mg => mg.name === 'cookies-banner'),
+    ];
+  }
+
+  let queue = [];
+  while (queue.length < 5) {
+    queue = queue.concat(shuffle([...categoryGames]));
+  }
+  Game.miniGameQueue = queue.slice(0, 5);
+
+  nextRound();
+}
+
+function nextRound() {
+  if (Game.history.length >= 5 || Game.lives <= 0) {
+    showReviewScreen();
+    return;
+  }
+  if (Game.miniGameQueue.length === 0) {
+    Game.miniGameQueue = shuffle(MiniGames.slice()); // Re-shuffle when used up
+  }
+  Game.activeMiniGame = Game.miniGameQueue.shift();
+  document.getElementById('round-label').textContent = `${t('round')} ${Game.roundsWon + (3 - Game.lives) + 1}`;
+  showIntro();
+}
+
+function showIntro() {
+  const mg = Game.activeMiniGame;
+  document.getElementById('intro-prompt').textContent = t(mg.prompt);
+  document.getElementById('intro-topic').textContent  = t(mg.topic);
+  document.getElementById('intro-description').textContent = mg.desc ? t(mg.desc) : '';
+  // Loopable micro-video pixel-art demo for the action. We replace the
+  // whole demo wrapper so its CSS animations restart cleanly each round.
+  const oldTut = document.getElementById('intro-tutorial');
+  const demoHTML = buildDemoHTML(mg.name, Game.lang)
+    .replace('<div class="demo ',
+             '<div id="intro-tutorial" data-testid="intro-tutorial" class="demo ');
+  oldTut.outerHTML = demoHTML;
+  Screens.show('screen-intro');
+  Game.acceptInput = false;
+  if (Game.introTimeout) clearTimeout(Game.introTimeout);
+  Game.introTimeout = setTimeout(() => {
+    startMiniGame();
+  }, 5000);
+}
+
+function startMiniGame() {
+  const mg = Game.activeMiniGame;
+  Screens.show('screen-game');
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+  area.className = ''; // clear any mini-game-mode classes from previous round
+  area.style.cursor = 'default';
+  Game.acceptInput = true;
+  let finished = false;
+  const finish = (won) => {
+    if (finished) return;
+    finished = true;
+    Game.acceptInput = false;
+    Timer.stop();
+    mg.cleanup && mg.cleanup();
+    showFeedback(won, mg);
+  };
+  mg.mount(area, () => finish(true), () => finish(false));
+  Timer.start(Game.currentTimerSec, () => {
+    SoundSynth.playLoseSound();
+    finish(false);
+  });
+}
+
+function showFeedback(won, mg) {
+  Game.history.push({
+    name: t(mg.prompt),
+    won: won,
+    tip: won ? t(mg.tipWin) : t(mg.tipLose)
+  });
+  const result = document.getElementById('feedback-result');
+  result.textContent = won ? t('youWin') : t('ohNo');
+  result.className = 'result ' + (won ? 'win' : 'lose');
+  document.getElementById('feedback-tip').textContent = won ? t(mg.tipWin) : t(mg.tipLose);
+  
+  const feedbackImg = document.getElementById('feedback-image');
+  feedbackImg.src = mg.name + '.png';
+  if (mg.name === 'fake-news' || mg.name === 'inbox-cleaner') {
+    feedbackImg.style.width = '240px';
+    feedbackImg.style.marginLeft = '-10px';
+  } else {
+    feedbackImg.style.width = '180px';
+    feedbackImg.style.marginLeft = '0';
+  }
+  feedbackImg.onload = () => feedbackImg.style.display = 'block';
+  if (won) {
+    SoundSynth.playWinSound();
+    Game.roundsWon++;
+    // Difficulty curve: 15 -> 10s, decrease 1s per win (floor 10)
+    Game.currentTimerSec = Math.max(10, 15 - Game.roundsWon);
+  } else {
+    Game.lives--;
+    renderLives();
+  }
+  // The Timer was already stopped in finish(). The tip overlay stays open
+  // until the player clicks NEXT — no auto-advance. This satisfies the
+  // "pause game timer entirely while tip is visible" requirement.
+  Screens.show('screen-feedback');
+}
+
+function showReviewScreen() {
+  Timer.stop();
+  Screens.hud(false);
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  const tipBox = document.getElementById('review-tip-box');
+  const tipText = document.getElementById('review-tip-text');
+  tipBox.classList.remove('active');
+  
+  Game.history.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'review-item ' + (item.won ? 'won' : 'lost');
+    btn.textContent = item.name;
+    btn.addEventListener('click', () => {
+      SoundSynth.playClickSound();
+      tipText.textContent = item.tip;
+      document.getElementById('review-tip-sprite').src = item.won ? 'bitty.png' : 'dizzy_bitty.png';
+      tipBox.classList.add('active');
+    });
+    list.appendChild(btn);
+  });
+  
+  Screens.show('screen-review');
+  SoundSynth.playGameOverSound();
+}
+
+function gameOver() {
+  Timer.stop();
+  Screens.hud(false);
+  document.getElementById('gameover-summary').textContent = t('survived', Game.roundsWon);
+  Screens.show('screen-gameover');
+  SoundSynth.playGameOverSound();
+}
+
+/* ---------------------------------------------------------
+   9. INPUT BINDINGS & INITIALIZATION
+   --------------------------------------------------------- */
+function returnToHome() {
+  if (Game.introTimeout) clearTimeout(Game.introTimeout);
+  Timer.stop();
+  if (Game.activeMiniGame && typeof Game.activeMiniGame.cleanup === 'function') {
+    Game.activeMiniGame.cleanup();
+  }
+  Screens.hud(false);
+  Screens.show('screen-start');
+}
+
+document.getElementById('btn-home').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  returnToHome();
+});
+
+  document.getElementById('btn-play').addEventListener('click', () => {
+    SoundSynth.resume();
+    SoundSynth.init();
+    SoundSynth.playClickSound();
+    Screens.show('screen-categories');
+  });
+
+  document.getElementById('btn-cat-citizenship').addEventListener('click', () => {
+    SoundSynth.playClickSound();
+    startNewGame('citizenship');
+  });
+  document.getElementById('btn-cat-dangers').addEventListener('click', () => {
+    SoundSynth.playClickSound();
+    startNewGame('dangers');
+  });
+  document.getElementById('btn-cat-privacy').addEventListener('click', () => {
+    SoundSynth.playClickSound();
+    startNewGame('privacy');
+  });
+document.getElementById('btn-cat-home').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  returnToHome();
+});
+document.getElementById('btn-gameover-menu').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  Screens.show('screen-categories');
+});
+document.getElementById('btn-review-menu').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  Screens.show('screen-categories');
+});
+document.getElementById('btn-restart').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  startNewGame();
+});
+document.getElementById('btn-review-restart').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  startNewGame();
+});
+document.getElementById('btn-close-tip').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  document.getElementById('review-tip-box').classList.remove('active');
+});
+// Manual tip dismissal — game only advances when player clicks NEXT.
+document.getElementById('btn-next').addEventListener('click', () => {
+  SoundSynth.playClickSound();
+  nextRound();
+});
+// Language toggle on start screen — switches all UI text immediately.
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    Game.lang = btn.dataset.lang;
+    SoundSynth.playClickSound();
+    applyLanguage();
+  });
+});
+// Initialize default language strings on load.
+applyLanguage();
+
+// Stage scaling on resize
+function fitStage() {
+  const stage = document.getElementById('stage');
+  const sx = window.innerWidth / 1000;
+  const sy = window.innerHeight / 660;
+  // Use 0.96 to leave a tiny margin, and remove the upper limit of 1 to allow scaling up on large screens!
+  const s = Math.min(sx, sy) * 0.96; 
+  stage.style.transform = `scale(${s})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+
+// First user gesture anywhere = init audio (browsers need this)
+window.addEventListener('pointerdown', () => SoundSynth.resume(), {once: true});
+
+// Expose dev hooks on window so external tooling/tests can drive the game.
+window.SoundSynth     = SoundSynth;
+window.Game           = Game;
+window.MiniGames      = MiniGames;
+window.Screens        = Screens;
+window.Timer          = Timer;
+window.I18N           = I18N;
+window.t              = t;
+window.applyLanguage  = applyLanguage;
+window.renderLives    = renderLives;
+window.startNewGame   = startNewGame;
+window.nextRound      = nextRound;
+
+</script>
+</body>
+</html>

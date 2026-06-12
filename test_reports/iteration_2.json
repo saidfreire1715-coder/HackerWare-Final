@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 2 retest of HackerWare. Phishing fix is FULLY APPLIED and verified (YOU WIN! triggers on cyan line click). Meme Shield fix is NOT FULLY APPLIED — mount() still sets area.id='meme-area' which breaks spawnBurst() (null appendChild) and prevents win. Remaining flows (loss, game-over, PLAY AGAIN, inbox virus->inbox loss, randomization, difficulty curve, dev hooks on window, sound functions, HUD position for Phishing) all work correctly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Meme Shield mini-game", "issue": "REGRESSION: line 1069 still has `area.id = 'meme-area';` (only Phishing was switched to classList.add). Each bad-meme click triggers PAGEERROR 'Cannot read properties of null (reading appendChild)' from spawnBurst() because document.getElementById('game-area') returns null after the rename. badRemaining-- and onWin in the click handler are NEVER reached. Confirmed: 9 simulated bad-meme clicks produced 4+ PAGEERRORs and OH NO! feedback (not YOU WIN!). The cleanup() at line 1186 correctly does classList.remove('meme-mode') but mount() never adds that class. Fix: replace `area.id = 'meme-area';` with `area.classList.add('meme-mode');` (parallel to Phishing fix at line 1382).", "selector": "[data-testid='bad-meme']", "priority": "CRITICAL"},
+      {"component": "Meme Shield instruction overlap", "issue": "Visually verified at 1920x1080: meme-shield instruction text (`pw-title` at top:14px) overlaps the HUD time bar (HUD y=246..302, instruction text shows up inside HUD region in the screenshot). Phishing instruction (the .phish-instruction element) is correctly positioned BELOW the HUD (instruction top=316 > HUD bottom=302). Issue is specific to Meme Shield reusing the same `.pw-title` class for top:14px positioning that was acceptable for Password but inside #game-area means below the HUD; however the screenshot shows the meme instruction visually overlapping the TIME bar. Recommend confirming with explicit `.meme-instruction { top: 70px; }` or wrap inside #game-area with its own offset.", "selector": ".pw-title (in meme-mode)", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Meme Shield win", "issue": "Cannot be won end-to-end; clicks throw and badRemaining never decrements; bubbles eventually escape causing lose.", "affected_selectors": ["[data-testid='bad-meme']", "[data-testid='screen-feedback']"]}
+    ],
+    "design_issues": [
+      {"screen": "Tip text", "issues": ["Every mini-game uses identical text for tipWin and tipLose. Spec might allow it, but the iteration 1 review already flagged this for differentiation on losses."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "FIX (CRITICAL): In MemeShield.mount() (line 1069), replace `area.id = 'meme-area';` with `area.classList.add('meme-mode');` so spawnBurst()/localRect() (which hard-code document.getElementById('game-area')) keep working. The CSS rule `#game-area.meme-mode { cursor: none; }` already exists (line 350) and cleanup already removes the class (line 1186) — only mount() was not updated.",
+    "FIX (MEDIUM): Move Meme Shield instruction text below the HUD. The shared `.pw-title` rule at line 329 uses top:14px which positions text in the HUD overlap zone for mini-games rendered inside #game-area at the current viewport. Phishing has its own `.phish-instruction` with correct positioning; add an equivalent `.meme-instruction` or override the top offset.",
+    "MINOR: Consider differentiating tipWin vs tipLose for better learning reinforcement on losses."
+  ],
+  "critical_code_review_comments": [
+    "The classList-based fix was inconsistently applied — only Phishing got updated. Inconsistency between mount() (sets id) and cleanup() (removes class) is a code smell. Recommend adding a comment near localRect/spawnBurst forbidding any mini-game from renaming #game-area.",
+    "Refactor localRect()/spawnBurst() to accept an `areaEl` parameter (or look it up by querySelector('#screen-game .game-area') / use the area passed into mount()) so future mini-games can't accidentally break the helpers.",
+    "Meme Shield bubble click handler calls spawnBurst BEFORE decrementing badRemaining. Even after the area-id fix, defensive coding suggests decrement-first, then visual FX, so an FX exception cannot block win logic."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "80% (4/5 mini-games fully verified end-to-end win/lose: Password [loss], Fake News [n/a here], Inbox [virus->inbox loss], Phishing [WIN]; Meme Shield STILL cannot be won)"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phishing Hook Cut is fully fixed (verified click cyan line → YOU WIN + correct tip 'Scammers use phishing hooks...'). Meme Shield STILL broken — same root cause as iter 1: area.id='meme-area' breaks spawnBurst/localRect. Only mount() needs change to area.classList.add('meme-mode'). Dev hooks all verified on window: SoundSynth/Game/MiniGames/Screens/Timer (objects), renderLives/nextRound/startNewGame (functions). All 5 SoundSynth play* functions are functions. Loss flow verified by stopping Timer + calling showFeedback(false, Game.activeMiniGame) → lives 3→2, OH NO! shown. Game Over flow verified by setting Game.lives=0 + gameOver(); PLAY AGAIN resets lives=3, roundsWon=0, currentTimerSec=15. Difficulty curve verified: [15,14,13,12,11,10,10,10,10] (floor 10). Randomization: 8/8 unique queue orderings across 8 startNewGame() samples (excellent). Inbox virus→inbox triggers OH NO! immediately as designed. Console PAGEERRORs observed = 4-6 during testing, all sourced from Meme Shield clicks (null appendChild) and follow-up startMiniGame on the area now named 'meme-area'.",
+  "rca_of_the_issue": "Main agent applied the classList.add('phish-mode') fix to Phishing's mount (line 1382) but did NOT apply the equivalent classList.add('meme-mode') change to MemeShield's mount (line 1069 still says `area.id = 'meme-area'`). The CSS rule `#game-area.meme-mode { cursor: none; }` exists and the cleanup() removes 'meme-mode' class, but mount adds neither — mount instead renames the area id which causes document.getElementById('game-area') in spawnBurst() to return null, throwing on appendChild and preventing the click handler from reaching badRemaining-- or onWin(). Mitigation: change line 1069 from `area.id = 'meme-area';` to `area.classList.add('meme-mode');`. Single-line fix."
+}

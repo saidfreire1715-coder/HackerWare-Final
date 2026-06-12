@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 5 FULL PASS. Verified the new HackerWare Enhanced Instruction Screen (top section: prompt + topic + per-mini-game description with cyan border-bottom separator on solid white #ffffff background; bottom section: looping pixel-art tutorial demo per mini-game) and the Meme Shield header-bar layout fix (fixed white header with 4px neon-pink border-bottom, z-index 5, height 70px at top of #game-area, with bubbles falling strictly behind/below). All 5 mini-game intros validated in BOTH EN and ES with unique descriptions and unique demo classes/animations. Zero JS console errors and zero page errors across all flows.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": [
+    "Intro screen structure: #screen-intro has solid white background (rgb(255,255,255)). .intro-top has 4px solid rgb(0,240,255) (neon-cyan) bottom border separating from .intro-bottom. #intro-prompt, #intro-topic, #intro-description, #intro-tutorial all exist with proper data-testids.",
+    "EN descriptions on all 5 mini-games (verified text): Password='Drag each puzzle piece into a slot to build a strong password!', MemeShield='Click only the mean red messages to block them. Let the kind green ones pass!', FakeNews='Drag fake alerts to the TRASH and true messages to the VERIFIED folder!', Inbox='Drag virus emails to the trash and safe emails to the inbox!', Phishing='Use the scissors cursor to click and cut the glowing cyan line!'.",
+    "ES descriptions on all 5 mini-games (verified text): Password='¡Arrastra cada pieza del rompecabezas a una casilla para crear una contraseña fuerte!', MemeShield='¡Haz clic solo en los mensajes rojos crueles para bloquearlos. Deja pasar los verdes amables!', FakeNews='¡Arrastra las alertas falsas a la BASURA y los mensajes verdaderos a la carpeta VERIFICADO!', Inbox='¡Arrastra los correos con virus al basurero y los correos seguros a la bandeja!', Phishing='¡Usa el cursor de tijeras para hacer clic y cortar la línea cian brillante!'.",
+    "Per-mini-game tutorial demo class applied correctly: demo-password (with .d-piece + .demo-cursor), demo-meme (with .d-bubble + .demo-cursor), demo-fakenews (with .d-alert + .d-bin + .demo-cursor), demo-inbox (with .d-email + .d-trash + .demo-cursor), demo-phish (with .d-line + .d-bait + .demo-scissors-cursor).",
+    "Tutorial animations running (CSS animationName non-empty): .d-piece=dPiece, .d-bubble=dBubble, .d-alert=dDrag, .d-email=dDrag, .demo-cursor in each demo runs its specific keyframes (dCursorPw / dCursorMeme / dCursorDrag), .demo-scissors-cursor=dScissors. (.d-line is intentionally static in the phishing demo while the scissors-cursor animates over it.)",
+    "ES/EN demo word labels swap: Meme UGLY!↔¡FEO!, FakeNews FAKE↔FALSO, Inbox FREE!↔¡GRATIS!, Phishing PRIZE↔PREMIO — all verified.",
+    "Intro→mount transition: at ~700ms intro is visible and game not yet mounted; at ~2.4s intro is hidden (display:none) and #game-area has children (game mounted). 2-second intro behavior preserved.",
+    "MEME SHIELD HEADER: .meme-header found inside #game-area, parentIsGameArea=true, background-color rgb(255,255,255), border-bottom 4px solid rgb(255,41,117) (neon-pink), z-index 5, height 70px, top 0 within game-area, instruction text 'CLICK ONLY THE MEAN MESSAGES (RED). LET THE NICE ONES (GREEN) PASS.' rendered inside.",
+    "MEME SHIELD NO OVERLAP: Polled .meme-bubble elements 25 times over ~4 seconds during active falling; 0 visual overlap violations (no bubble both intersects header rect AND has z-index >= header z-index). Bubbles either fall below y=70 or pass behind the solid white header due to z-index 5 vs default 0.",
+    "MEME SHIELD HEADER NON-CLICKABLE AS BUBBLE: Clicking the center of the header (within game-area) does not trigger feedback / does not register as a bubble click.",
+    "MEME SHIELD GAMEPLAY: clicks on bad bubbles register; the mini-game ends and shows a feedback screen (YOU WIN or OH NO depending on which bubbles escape).",
+    "Manual NEXT required on feedback: after waiting 4 extra seconds on feedback, #screen-feedback remains display!=none (no auto-advance). Clicking [data-testid=next-button] hides feedback and shows #screen-intro for the next round.",
+    "Timer paused on feedback: Game.timerInterval === null while feedback screen is visible.",
+    "Fake News random pool: 6 forced mounts drew 3 fake-news-alert + 3 true-news-alert (both data-testids present). Drag fake → recycle-bin route correctly shows 'YOU WIN!'.",
+    "ZERO console errors and ZERO pageerror events across the entire EN+ES test sequence (intros for all 5 games × 2 languages, meme gameplay to completion, fake news drag, NEXT advance)."
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Non-blocking polish: .d-line in the phishing demo has no animation while .demo-scissors-cursor does animate over it. Functionally correct (the line is the target), but the review item lists '.d-line' implicitly when validating motion — explicitly excluding .d-line from the animation-check spec or adding a subtle wobble could prevent future ambiguity.",
+    "Non-blocking polish (carried over from iter 4): several MiniGame tipWin/tipLose copies are still identical; differentiated win-vs-lose tips would improve educational value.",
+    "Non-blocking i18n consideration (carried over from iter 4): the round-label is set imperatively without data-i18n; fine while language toggle is start-screen only."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (static page, no backend)", "frontend": "100% (14/14 review items verified, 0 console/page errors)"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Public URL: https://syntax-checker-59.preview.emergentagent.com/hackerware.html?v=12 (bump ?v=N on retest). Dev hooks on window: Game, MiniGames (5 entries), Screens, Timer, I18N, t, applyLanguage, renderLives, startNewGame, nextRound, gameOver. To force a specific intro screenshot, set lang and queue: `Game.lang='es'; applyLanguage(); Game.lives=3; Game.miniGameQueue=[MiniGames[N]]; renderLives(); Screens.hud(true); nextRound();` then wait 700-900ms to capture mid-intro. N=0 Password, 1 MemeShield, 2 FakeNews, 3 Inbox, 4 Phishing. Intro elements: #intro-prompt, #intro-topic, #intro-description, #intro-tutorial (replaced via outerHTML; data-testid=intro-tutorial preserved). Demo classes: .demo-password|meme|fakenews|inbox|phish; .d-piece|bubble|alert|email|bait|line; .demo-cursor / .demo-scissors-cursor. Meme Shield header: .meme-header (inside #game-area, z-index 5, height 70px, border-bottom 4px solid neon-pink). To validate no-overlap rigorously: poll .meme-bubble bounding rects vs header rect every ~150ms during the 15s gameplay and assert no bubble has visuallyCovers=(rectOverlap && bubbleZ>=headerZ). Feedback hooks unchanged: [data-testid=feedback-result], #fb-tip, [data-testid=next-button]. Timer pause check: Game.timerInterval === null on feedback.",
+  "rca_of_the_issue": "No bugs reproduced. Both new features (enhanced two-section intro with per-game description + looping pixel-art demo, and Meme Shield fixed pink-bordered header with z-index masking of falling bubbles) behave exactly as specified in EN and ES."
+}
