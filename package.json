@@ -1,0 +1,24 @@
+{
+  "name": "hackerware",
+  "version": "1.0.0",
+  "description": "HackerWare Game",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "author": "Mogosexo",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.mogosexo.hackerware",
+    "win": {
+      "target": "nsis",
+      "icon": "bitty.png"
+    }
+  }
+}
